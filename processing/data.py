@@ -1,4 +1,4 @@
-from files_utils import *
+from processing.files_utils import *
 from PIL import Image as PILImage
 import numpy
 from PIL.ImageQt import ImageQt

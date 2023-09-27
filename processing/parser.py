@@ -3,6 +3,7 @@ import sys
 from bitstring import BitArray
 import matplotlib.pyplot as plt
 import os
+import processing.files_utils as files_utils
 
 filePnR="input/pnr_001212.sav"
 fileSavDump="input/PHOTO.sav"
@@ -52,23 +53,36 @@ def read_file(file_path):
 		file = open(file_path, 'rb')
 		fullRamSize = 131072
 		onePictureDataSize = 3584
+		
+		# todo handle Photo 8 rolls : 2048Ko 
+		
 		file_size = os.path.getsize(file_path)
 		if file_size == fullRamSize:
 			firstPictureAddress="02000"
 			file.seek(int(firstPictureAddress, 16))
+			# todo iterate
 		read_image_data(file, image_arr)
 		
 	except Exception as err:
 		print("Cannot process file {} : {}".format(file_path, err))
 
-read_file(filePnR)
-
-
-plt.imshow(image_arr, cmap='gray', interpolation='nearest')
-plt.axis('off')
-
-#read_file(fileSavDump)
+def test():
+	read_file(filePnR)
 	
-plt.show()
+	
+	plt.imshow(image_arr, cmap='gray', interpolation='nearest')
+	plt.axis('off')
+	
+	#read_file(fileSavDump)
+		
+	plt.show()
 
+def convert_folder(input_folder, output_folder, file_processed_callback):
+	input_sav_files = files_utils.get_sav_files(input_folder)
+	if not input_sav_files:
+		file_processed_callback("Not .sav files found in directory \"{}\"".format(input_folder))
+	else:
+		for f in input_sav_files:
+			# todo actually convert
+			file_processed_callback("Converted {}".format(f))
 

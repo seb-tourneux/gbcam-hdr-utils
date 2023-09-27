@@ -1,25 +1,31 @@
 import os
 import natsort
 
-image_extensions = [".png",".PNG", ".bmp", ".BMP"]
+image_extensions = (".png", ".bmp")
+sav_extensions = (".sav")
 
-def get_image_files(dir): 
-	file_list = os.listdir(dir)
+def get_files(directory, extensions): 
+	file_list = os.listdir(directory)
 	res = []
 	for file in file_list:
-		full_path = os.path.join(dir, file)
-		if os.path.isfile(os.path.join(dir, file)):
+		full_path = os.path.join(directory, file)
+		if os.path.isfile(os.path.join(directory, file)):
 				res.append(full_path)
 		else:
-			result = get_image_files(os.path.join(dir, file))
+			result = get_image_files(os.path.join(directory, file))
 			if result:
-				res.extend(get_image_files(os.path.join(dir, file)))
+				res.extend(get_image_files(os.path.join(directory, file)))
 				
-	res=[filename for filename in res if filename[-4:] in image_extensions]
-
+	res = [ file for file in res if file.lower().endswith( extensions ) ]
 	res = natsort.natsorted(res)
 
 	return res
+
+def get_image_files(directory):
+	return get_files(directory, image_extensions)
+
+def get_sav_files(directory):
+	return get_files(directory, sav_extensions)
 
 
 # process each folders
@@ -33,4 +39,3 @@ def get_sub_directories(input_dir):
 
 	res = natsort.natsorted(res)
 	return res
-

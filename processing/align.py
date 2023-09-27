@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
-import data
-import files_utils
+import processing.data as data
+import processing.files_utils as files_utils
 import matplotlib.pyplot as plt
 from PIL import Image
 
