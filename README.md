@@ -7,7 +7,18 @@ Utilities and GUI for processing HDR Gameboy Camera pictures.
 
 ### Convert
 
-Extension selection png/bmp
-Support Photo rolls dump (2048Ko)
+- [ ] Output extension selection png/bmp
+- [ ] Support Photo rolls dump (2048Ko)
 
+### Organize 
 
+- [ ] GUI
+
+### GUI
+
+- [ ] Organize tab
+- [ ] Blend tab
+- [ ] Stitch tab
+
+#### Nice to have
+- [ ] pictures previews
