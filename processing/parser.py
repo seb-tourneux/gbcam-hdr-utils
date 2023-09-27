@@ -77,12 +77,14 @@ def test():
 		
 	plt.show()
 
-def convert_folder(input_folder, output_folder, file_processed_callback):
+def convert_folder(input_folder, output_folder, file_processed_callback = None):
 	input_sav_files = files_utils.get_sav_files(input_folder)
 	if not input_sav_files:
-		file_processed_callback("Not .sav files found in directory \"{}\"".format(input_folder))
+		if file_processed_callback:
+			file_processed_callback("Not .sav files found in directory \"{}\"".format(input_folder))
 	else:
 		for f in input_sav_files:
 			# todo actually convert
-			file_processed_callback("Converted {}".format(f))
+			if file_processed_callback:
+				file_processed_callback("Converted {}".format(f))
 

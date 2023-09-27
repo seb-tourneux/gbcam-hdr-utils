@@ -49,8 +49,10 @@ class FolderSelectorLineWidget(QWidget):
 				subprocess.Popen(["xdg-open", path])
 			
 	def get_folder(self):
-		# sanitize
-		return os.path.normpath(self.folder_line_edit.text())
+		if self.folder_line_edit.text():
+			return os.path.normpath(self.folder_line_edit.text())
+		else:
+			return ""
 
 
 

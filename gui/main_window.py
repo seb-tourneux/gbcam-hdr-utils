@@ -2,6 +2,7 @@ import sys
 from PySide6.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QWidget, QTabWidget
 
 from gui.window_convert import *
+from gui.window_organize import *
 
 
 
@@ -17,7 +18,7 @@ class MainWindow(QMainWindow):
 
 		tabwidget = QTabWidget()
 		tabwidget.addTab(WidgetConvert(), "Convert")
-		tabwidget.addTab(QLabel("TODO WidgetOrganize()"), "Organize")
+		tabwidget.addTab(WidgetOrganize(), "Organize")
 		tabwidget.addTab(QLabel("TODO WidgetBlend()"), "Blend")
 		tabwidget.addTab(QLabel("TODO WidgetStitch()"), "Stitch")
 		
