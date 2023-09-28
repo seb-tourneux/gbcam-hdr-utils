@@ -1,32 +1,11 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QPushButton, QSpacerItem
+from .window_common import *
 
-from gui.in_out_folders_selector import *
-from gui.output_console import *
-import processing.parser as parser
-import os
 
-class WidgetConvert(QWidget):
+class WidgetConvert(WidgetCommon):
 	def __init__(self):
-		super(WidgetConvert, self).__init__()
+		super(WidgetConvert, self).__init__("Convert", self.do_it)
 
-		self.main_layout = QVBoxLayout()
-		self.setLayout(self.main_layout)
-		self.main_layout.setAlignment(Qt.AlignTop)
-		
-		self.folders_selector_widget = InOutFoldersSelectorWidget()
-		self.main_layout.addWidget(self.folders_selector_widget)
-		
-		convert_btn = QPushButton("Convert")
-		convert_btn.setMinimumHeight(50)
-		self.main_layout.addWidget(convert_btn)
-		convert_btn.clicked.connect(self.convert)
-		
-		self.main_layout.addStretch()
-		
-		self.output_console = OutputConsoleWidget()
-		self.main_layout.addWidget(self.output_console)
-
-	def convert(self):
+	def do_it(self):
 		(in_folder, out_folder) = self.folders_selector_widget.get_folders()
 		
 		self.output_console.clear()

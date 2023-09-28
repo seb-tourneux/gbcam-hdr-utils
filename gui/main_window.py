@@ -1,8 +1,9 @@
 import sys
 from PySide6.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QWidget, QTabWidget
 
-from gui.window_convert import *
-from gui.window_organize import *
+from .window_convert import *
+from .window_organize import *
+from .window_process import *
 
 
 
@@ -19,12 +20,12 @@ class MainWindow(QMainWindow):
 		tabwidget = QTabWidget()
 		tabwidget.addTab(WidgetConvert(), "Convert")
 		tabwidget.addTab(WidgetOrganize(), "Organize")
-		tabwidget.addTab(QLabel("TODO WidgetBlend()"), "Blend")
+		tabwidget.addTab(WidgetProcess(), "Process")
 		tabwidget.addTab(QLabel("TODO WidgetStitch()"), "Stitch")
 		
 		tabwidget.setTabToolTip(0, "Convert .sav files to .png")
 		tabwidget.setTabToolTip(1, "Organize AEB sequences into separate folders")
-		tabwidget.setTabToolTip(2, "Blend pictures subfolder by subfolder")
+		tabwidget.setTabToolTip(2, "Process pictures sets : average, create gifs. Processing is done subfolder by subfolder")
 		tabwidget.setTabToolTip(3, "Stitch pictures from a folder")
 		
 		self.main_layout.addWidget(tabwidget)

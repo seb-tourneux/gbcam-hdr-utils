@@ -1,32 +1,19 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QPushButton, QSpacerItem
+from PySide6.QtWidgets import QLabel, QGridLayout
 
-from gui.in_out_folders_selector import *
-from gui.output_console import *
-import processing.organizer as organizer
+from .window_common import *
 import os
 
-class WidgetOrganize(QWidget):
+class WidgetOrganize(WidgetCommon):
+	def build_middle_widget(self):
+		middle_layout = QGridLayout()
+		self.middle_label = QLabel("test")
+		middle_layout.addWidget(self.middle_label)
+		return middle_layout
+
 	def __init__(self):
-		super(WidgetOrganize, self).__init__()
+		super(WidgetOrganize, self).__init__("Organize", self.do_it, self.build_middle_widget)
 
-		self.main_layout = QVBoxLayout()
-		self.setLayout(self.main_layout)
-		self.main_layout.setAlignment(Qt.AlignTop)
-		
-		self.folders_selector_widget = InOutFoldersSelectorWidget()
-		self.main_layout.addWidget(self.folders_selector_widget)
-		
-		convert_btn = QPushButton("Organize")
-		convert_btn.setMinimumHeight(50)
-		self.main_layout.addWidget(convert_btn)
-		convert_btn.clicked.connect(self.organize)
-		
-		self.main_layout.addStretch()
-		
-		self.output_console = OutputConsoleWidget()
-		self.main_layout.addWidget(self.output_console)
-
-	def organize(self):
+	def do_it(self):
 		(in_folder, out_folder) = self.folders_selector_widget.get_folders()
 		
 		self.output_console.clear()
