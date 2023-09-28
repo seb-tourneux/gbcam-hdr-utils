@@ -1,6 +1,7 @@
 from .window_common import *
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QCheckBox, QWidget, QSpinBox, QGroupBox
 from .in_out_folders_selector import *
+import processing.process_batch as process_batch
 
 
 class WidgetProcess(WidgetCommon):
@@ -10,6 +11,7 @@ class WidgetProcess(WidgetCommon):
 		blend_layout.setAlignment(Qt.AlignTop)
 		blend_widget.setLayout(blend_layout)
 		self.checkbox_blend_average = QCheckBox("Average", self)
+		self.checkbox_blend_average.setChecked(True)
 		blend_layout.addWidget(self.checkbox_blend_average)
 		return blend_widget
 
@@ -44,12 +46,13 @@ class WidgetProcess(WidgetCommon):
 		post_widget.setLayout(post_layout)
 
 
+		self.scale_factor_widget = QGroupBox("Scale", self)
 		scale_factor_layout = QVBoxLayout()
 		scale_factor_layout.setAlignment(Qt.AlignTop)
-		scale_factor_widget = QWidget(self)
-		scale_factor_widget.setLayout(scale_factor_layout)
+		self.scale_factor_widget.setLayout(scale_factor_layout)
+		self.scale_factor_widget.setCheckable(True)
+		self.scale_factor_widget.setChecked(False)
 		self.spin_box_scale_factor = QSpinBox(minimum=1, maximum=100, value = 10, suffix='x')
-		scale_factor_layout.addWidget(QLabel("Scale"))
 		scale_factor_layout.addWidget(self.spin_box_scale_factor)
 
 		add_border_layout = QVBoxLayout()
@@ -63,10 +66,9 @@ class WidgetProcess(WidgetCommon):
 		self.checkbox_add_border.setLayout(add_border_layout)
 
 		post_layout.addWidget(self.checkbox_add_border)
-		post_layout.addWidget(scale_factor_widget)
+		post_layout.addWidget(self.scale_factor_widget)
 
 		return post_widget
-
 
 	def build_middle_widget(self):
 		middle_widget = QGroupBox("Settings", self)
@@ -82,11 +84,35 @@ class WidgetProcess(WidgetCommon):
 	def __init__(self):
 		super(WidgetProcess, self).__init__("Process", self.do_it, self.build_middle_widget)
 
-	def do_it(self):
-		gif_first_to_last = self.checkbox_gif_first_to_last.isChecked()
-		gif_last_to_first = self.checkbox_gif_last_to_first.isChecked()
-		gif_depth = self.checkbox_gif_depth.isChecked()
-		blend_average = self.checkbox_blend_average.isChecked()
-		frame_duration = self.spin_box_frame_duration.value()
+	@staticmethod
+	def has_work_to_do(options):
+		return any([
+			options['gif_first_to_last'],
+			options['gif_last_to_first'],
+			options['gif_depth'],
+			options['blend_average'],
+			options['border_path'] != None,
+			options['scale_factor'] != 1])
 
-		print("todo")
+	def do_it(self):
+		if not self.check_folders():
+			return
+
+		scale_factor = self.spin_box_scale_factor.value() if self.scale_factor_widget.isChecked() else 1
+		border_path = self.border_file_selector.get_folder() if self.checkbox_add_border.isChecked() else None # todo get file
+		options = {'gif_first_to_last' : self.checkbox_gif_first_to_last.isChecked(),
+			    'gif_last_to_first' : self.checkbox_gif_last_to_first.isChecked(), # todo
+				'gif_depth' : self.checkbox_gif_depth.isChecked(),  # todo
+				'blend_average' : self.checkbox_blend_average.isChecked(),
+				'gif_frame_duration' : self.spin_box_frame_duration.value(),
+				'scale_factor' : scale_factor,
+				'border_path' : border_path
+			 }
+
+		if not WidgetProcess.has_work_to_do(options):
+			self.add_text("Nothing to do")
+
+		(in_folder, out_folder) = self.folders_selector_widget.get_folders()
+		process_batch.process_batch(in_folder, out_folder, options, self.add_text)
+
+		self.job_done()

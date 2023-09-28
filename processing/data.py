@@ -77,13 +77,15 @@ def finalizeAndSave(arr, scale_factor, output_dir, aFolder, aSuffix):
 	out.save(imgOutput)
 	print("Saved {}".format(imgOutput))
 	
-def make_gif(images_folder, output_folder, scale_factor, gifFrameDurationMs, border_path = None):
+def make_gif(images_folder, output_folder, scale_factor, gifFrameDurationMs, border_path = None, reverse = False):
 	lastDir = os.path.basename(os.path.normpath(images_folder))
 	imgGifOutput = output_folder + "/" + lastDir + "_anim"
 
 	allfiles=os.listdir(images_folder)
 	im_files=[images_folder+"/"+filename for filename in allfiles if  filename[-4:] in [".png",".PNG", ".bmp"]]
 	im_files.sort()
+	if reverse:
+		im_files.reverse()
 	
 	border_img = None
 	if border_path is not None:
@@ -97,7 +99,7 @@ def make_gif(images_folder, output_folder, scale_factor, gifFrameDurationMs, bor
 
 	frame_one = frames[0]
 	
-	gif_filename = "{}_{}.gif".format(imgGifOutput, gifFrameDurationMs)
+	gif_filename = "{}_{}ms{}.gif".format(imgGifOutput, gifFrameDurationMs, "_reverse" if reverse else "")
 
 	frame_one.save(gif_filename, format="GIF", append_images=frames[1:],
 									save_all=True, duration=gifFrameDurationMs, loop=0)

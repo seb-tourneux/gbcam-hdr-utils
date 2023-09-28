@@ -15,7 +15,8 @@ Utilities and GUI for processing HDR Gameboy Camera pictures.
 
 ### Process
 - [x] GUI
-- [ ] link to core
+- [x] link to core
+- [ ] implement increasing depth
 
 ### Stitch
 - [ ] GUI
@@ -29,4 +30,3 @@ Utilities and GUI for processing HDR Gameboy Camera pictures.
 
 - [ ] relative imports
 - [ ]  __main__.py,  __init__.py 
-

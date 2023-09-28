@@ -25,3 +25,4 @@ class OutputConsoleWidget(QScrollArea):
 		
 	def clear(self):
 		self.set_text("")
+
