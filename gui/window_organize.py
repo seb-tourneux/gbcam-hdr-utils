@@ -4,14 +4,10 @@ from .window_common import *
 import os
 
 class WidgetOrganize(WidgetCommon):
-	def build_middle_widget(self):
-		middle_layout = QGridLayout()
-		self.middle_label = QLabel("test")
-		middle_layout.addWidget(self.middle_label)
-		return middle_layout
+
 
 	def __init__(self):
-		super(WidgetOrganize, self).__init__("Organize", self.do_it, self.build_middle_widget)
+		super(WidgetOrganize, self).__init__("Organize", self.do_it)
 
 	def do_it(self):
 		(in_folder, out_folder) = self.folders_selector_widget.get_folders()

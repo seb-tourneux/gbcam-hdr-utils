@@ -11,10 +11,15 @@ Utilities and GUI for processing HDR Gameboy Camera pictures.
 
 ### Organize 
 - [x] GUI
+- [ ] link to core
 
-### GUI
-- [ ] Blend tab
-- [ ] Stitch tab
+### Process
+- [x] GUI
+- [ ] link to core
+
+### Stitch
+- [ ] GUI
+- [ ] link to core
 
 #### Nice to have
 - [ ] pictures previews

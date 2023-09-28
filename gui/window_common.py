@@ -6,7 +6,7 @@ import processing.organizer as organizer
 import os
 
 class WidgetCommon(QWidget):
-	def __init__(self, button_name, button_callback, middle_layout=None):
+	def __init__(self, button_name, button_callback, build_middle_widget=None):
 		super(WidgetCommon, self).__init__()
 
 		self.main_layout = QVBoxLayout()
@@ -18,10 +18,12 @@ class WidgetCommon(QWidget):
 
 		self.main_layout.addStretch()
 
-		self.middle_widget = QWidget(self)
-		if middle_layout:
-			self.middle_widget.setLayout(middle_layout())
+		if build_middle_widget:
 
+			self.middle_widget = build_middle_widget()
+		else:
+			self.middle_widget = QWidget(self)
+		#print(self.middle_widget)
 		self.main_layout.addWidget(self.middle_widget)
 
 		self.main_layout.addStretch()
