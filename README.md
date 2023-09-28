@@ -11,7 +11,7 @@ Utilities and GUI for processing HDR Gameboy Camera pictures.
 
 ### Organize 
 - [x] GUI
-- [ ] link to core
+- [x] link to core
 
 ### Process
 - [x] GUI

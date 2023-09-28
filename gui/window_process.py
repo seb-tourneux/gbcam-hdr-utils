@@ -1,5 +1,6 @@
 from .window_common import *
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QCheckBox, QWidget, QSpinBox, QGroupBox
+from .in_out_folders_selector import *
 
 
 class WidgetProcess(WidgetCommon):
@@ -36,14 +37,46 @@ class WidgetProcess(WidgetCommon):
 		gif_layout.addWidget(duration_widget)
 		return gif_widget
 
+	def build_post_process_widget(self):
+		post_widget = QGroupBox("Post-process", self)
+		post_layout = QVBoxLayout()
+		post_layout.setAlignment(Qt.AlignTop)
+		post_widget.setLayout(post_layout)
+
+
+		scale_factor_layout = QVBoxLayout()
+		scale_factor_layout.setAlignment(Qt.AlignTop)
+		scale_factor_widget = QWidget(self)
+		scale_factor_widget.setLayout(scale_factor_layout)
+		self.spin_box_scale_factor = QSpinBox(minimum=1, maximum=100, value = 10, suffix='x')
+		scale_factor_layout.addWidget(QLabel("Scale"))
+		scale_factor_layout.addWidget(self.spin_box_scale_factor)
+
+		add_border_layout = QVBoxLayout()
+		self.checkbox_add_border = QGroupBox("Add border", self)
+		self.checkbox_add_border.setCheckable(True)
+		self.checkbox_add_border.setChecked(False)
+
+		# todo file selector, not folder
+		self.border_file_selector = FolderSelectorLineWidget()
+		add_border_layout.addWidget(self.border_file_selector)
+		self.checkbox_add_border.setLayout(add_border_layout)
+
+		post_layout.addWidget(self.checkbox_add_border)
+		post_layout.addWidget(scale_factor_widget)
+
+		return post_widget
+
+
 	def build_middle_widget(self):
 		middle_widget = QGroupBox("Settings", self)
 		middle_layout = QHBoxLayout()
 		middle_layout.setAlignment(Qt.AlignTop)
 		middle_widget.setLayout(middle_layout)
 
-		middle_layout.addWidget(self.build_blend_widget())
-		middle_layout.addWidget(self.build_gif_widget())
+		middle_layout.addWidget(self.build_blend_widget(), stretch=1)
+		middle_layout.addWidget(self.build_gif_widget(), stretch=1)
+		middle_layout.addWidget(self.build_post_process_widget(), stretch=1)
 		return middle_widget
 
 	def __init__(self):
