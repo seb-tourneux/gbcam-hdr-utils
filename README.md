@@ -13,10 +13,15 @@ Utilities and GUI for processing HDR Gameboy Camera pictures.
 - [x] GUI
 
 ### GUI
-- [ ] Organize tab
 - [ ] Blend tab
 - [ ] Stitch tab
 
 #### Nice to have
 - [ ] pictures previews
-- [ ] save config (last opened tab, paths for each step)
+- [ ] save config (last opened tab, paths for each step, settings)
+
+### Code
+
+- [ ] relative imports
+- [ ]  __main__.py,  __init__.py 
+
