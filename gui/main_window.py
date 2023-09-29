@@ -4,14 +4,14 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QHBoxLayou
 from .window_convert import *
 from .window_organize import *
 from .window_process import *
-
+import processing.infos as infos
 
 
 class MainWindow(QMainWindow):
 	def __init__(self):
 		super(MainWindow, self).__init__()
 
-		self.setWindowTitle("gbcam-hdr-utils")
+		self.setWindowTitle(infos.get_software_name())
 
 		self.main_layout = QHBoxLayout()
 		self.main_widget = QWidget()

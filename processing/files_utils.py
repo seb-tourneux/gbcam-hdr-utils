@@ -2,7 +2,11 @@ import os
 import natsort
 
 image_extensions = (".png", ".bmp")
-sav_extensions = (".sav")
+sav_extensions = (".sav", ".gb", ".gbc")
+
+def get_filename_no_ext(path):
+	base = os.path.basename(path)
+	return os.path.splitext(base)[0]
 
 def get_files(directory, extensions): 
 	file_list = os.listdir(directory)

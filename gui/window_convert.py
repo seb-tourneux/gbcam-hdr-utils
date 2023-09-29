@@ -1,5 +1,5 @@
 from .window_common import *
-
+import processing.parser as parser
 
 class WidgetConvert(WidgetCommon):
 	def __init__(self):

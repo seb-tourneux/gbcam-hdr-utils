@@ -1,7 +1,9 @@
 from cli.parse_arguments import *
+import processing.parser as parser
 
 args = parse_arguments()
 
-print(args)
+if args.action == "convert":
+	parser.convert_folder(args.input_folder, args.output_folder, print)
 
 # todo actuel process

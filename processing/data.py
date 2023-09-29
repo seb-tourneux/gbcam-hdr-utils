@@ -3,6 +3,7 @@ from PIL import Image as PILImage
 import numpy
 from PIL.ImageQt import ImageQt
 import os
+import processing.infos as infos
 
 def crop(img_pil):
 	s = img_pil.size
@@ -105,3 +106,12 @@ def make_gif(images_folder, output_folder, scale_factor, gifFrameDurationMs, bor
 									save_all=True, duration=gifFrameDurationMs, loop=0)
 	
 	print("Saved {}".format(gif_filename))
+
+def save_image_array(arr, path):
+	arr=numpy.array(numpy.round(255.0*arr),dtype=numpy.uint8)
+	pilImg = PILImage.fromarray(arr)
+# 	exif_data = {
+# 		271: "Gameboy Camera",
+# 		305: infos.get_software_name()}
+	#pilImg.info["exif"] = exif_data
+	pilImg.save(path)
