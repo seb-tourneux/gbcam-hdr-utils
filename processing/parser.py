@@ -106,9 +106,9 @@ def get_output_path(output_folder, input_file, i, bank, savType):
 	if savType == SavTypes.Type.SINGLE:
 		suffix = ""
 	elif savType == SavTypes.Type.ORIGINAL_RAM_DUMP:
-		suffix = "_{}".format(i)
+		suffix = "_{:02d}".format(i)
 	elif savType == SavTypes.Type.FRAM_DUMP:
-		suffix = "_bank_{}_{}".format(bank, i)
+		suffix = "_bank_{:02d}_{:02d}".format(bank, i)
 
 	filename = files_utils.get_filename_no_ext(input_file)
 	out_file = "{}/{}{}.png".format(output_folder, filename, suffix)
