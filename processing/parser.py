@@ -1,6 +1,5 @@
 import numpy as np
 import sys
-from bitstring import BitArray
 import matplotlib.pyplot as plt
 import os
 import processing.files_utils as files_utils
@@ -9,18 +8,29 @@ from inspect import currentframe
 from enum import Enum
 from chrono import Timer
 
-color_map = [3, 2, 1, 0]
 
 class SavTypes():
-	Type = Enum('Type', ['SINGLE', 'RAM_DUMP', 'FRAM_DUMP'])
+	Type = Enum('Type', ['SINGLE', 'ORIGINAL_RAM_DUMP', 'FRAM_DUMP'])
 
 	@staticmethod
 	def get_type(file_size):
-		typeFromSize = {	3_584 : SavTypes.Type.SINGLE, # 4 KiB,
-							   131_072 : SavTypes.Type.RAM_DUMP, # 128 KiB
-							   2_097_152 : SavTypes.Type.FRAM_DUMP # 2048 KiB, 16xRAM_DUMP
-					   }
-		return typeFromSize[file_size]
+		singleSize = 3_584
+		originalRAMDumpSize = 131_072
+		if file_size == 3_584: # 4 KiB
+			return SavTypes.Type.SINGLE
+		elif file_size == 131_072: # 128 KiB
+			return SavTypes.Type.ORIGINAL_RAM_DUMP
+		elif file_size % originalRAMDumpSize == 0:
+			# n banks
+			#1024 KiB (8 banks), 2048 KiB (16 banks), etc
+			return SavTypes.Type.FRAM_DUMP
+		else:
+			return None
+
+print_chrono = False
+nb_tiles = 224 # 128*112/64 : 128*112 total pixels, 8*8 pixels per tile
+tile_size = 16
+
 
 def get_linenumber():
 	cf = currentframe()
@@ -39,54 +49,63 @@ def pairwise(iterable):
 	a = iter(iterable)
 	return zip(a, a)
 
-def read_tile(bytes_16, x, y, arr):
-	for row, (lo_str, hi_str) in enumerate(pairwise(bytes_16)):
-		lo_value = BitArray(uint=lo_str, length=8)
-		hi_value = BitArray(uint=hi_str, length=8)
+masks = [0b10000000,
+0b01000000,
+0b00100000,
+0b00010000,
+0b00001000,
+0b00000100,
+0b00000010,
+0b00000001]
 
+color_map = {(True, True) :0,
+			 (True, False) : 128,
+			 (False, True) : 192,
+			 (False, False) : 255}
+
+def read_tile(cur_tile_bytes, tile_idx, arr):
+	x = tile_idx % 16
+	y = tile_idx // 16
+
+	for row, (lo, hi) in enumerate(pairwise(cur_tile_bytes)):
 		for col in range(8):
-			lo_masked = lo_value[col]
-			hi_masked = hi_value[col]
-			res = BitArray([hi_masked, lo_masked])
-			
+			lo_masked = lo& masks[col] != 0
+			hi_masked = hi & masks[col] != 0
+
 			row_offset = y*8+row
 			col_offset = x*8+col
-			arr[row_offset][col_offset] = color_map[res.uint]
+			arr[row_offset][col_offset] = color_map[(hi_masked, lo_masked)]
+
+
+
 
 # return if image_data could be read
 # (ie not end of file)
 def read_image_data(file, arr):
 	#dbg_print_info(get_linenumber(), file)
-	x = 0
-	y = 0
 
-	bytes_16 = file.read(16)
-	if not bytes_16:
+	tiles_bytes = file.read(nb_tiles*tile_size)
+	if not tiles_bytes:
 		return False
 
-	while bytes_16:
-		read_tile(bytes_16, x, y, arr)
+	for tile_idx in range(0, nb_tiles):
+		read_tile(tiles_bytes[tile_idx*tile_size : (tile_idx+1)*tile_size], tile_idx, arr)
 
-		x += 1
-		if x*8 >=  arr.shape[1]:
-			x = 0
-			y += 1
+	read_metadata(file)
 
-		if y*8 >=  arr.shape[0]:
-			break
-		bytes_16 = file.read(16)
 	return True
 
 def read_metadata(file):
 	# todo
 	# for now, just consume the section
 	metadata_size = 512
-	file.seek(file.tell() + metadata_size)
+	#file.seek(file.tell() + metadata_size)
+	file.read(metadata_size)
 
 def get_output_path(output_folder, input_file, i, bank, savType):
 	if savType == SavTypes.Type.SINGLE:
 		suffix = ""
-	elif savType == SavTypes.Type.RAM_DUMP:
+	elif savType == SavTypes.Type.ORIGINAL_RAM_DUMP:
 		suffix = "_{}".format(i)
 	elif savType == SavTypes.Type.FRAM_DUMP:
 		suffix = "_bank_{}_{}".format(bank, i)
@@ -97,18 +116,20 @@ def get_output_path(output_folder, input_file, i, bank, savType):
 
 def write_image(arr, file_path, output_folder, i, bank, savType, file_processed_callback = None):
 	out_path = get_output_path(output_folder, file_path, i, bank, savType)
-	data.save_image_array(arr, out_path)
+	data.save_image_array(arr, False, out_path)
 	file_processed_callback("=== Saved {}".format(out_path))
 
 def end_of_bank(file):
 	pos = file.tell()
 	return pos % 131_072 == 0
 
+def skip_header(file):
+	firstPictureAddress="02000"
+	file.seek(file.tell() + int(firstPictureAddress, 16))
+
 def convert_file(file_path, output_folder, file_processed_callback = None):
 	try:
-		with Timer() as timerOpen:
-			file = open(file_path, 'rb')
-		print("timerOpen: {} seconds".format(timerOpen.elapsed))
+		file = open(file_path, 'rb')
 
 		with Timer() as timerConv:
 			arr  = np.zeros((112, 128), dtype=np.uint8)
@@ -119,28 +140,27 @@ def convert_file(file_path, output_folder, file_processed_callback = None):
 			bank = 1
 			if savType == SavTypes.Type.SINGLE:
 				read_image_data(file, arr)
-				write_image(arr, file_path, output_folder, i, savType, file_processed_callback)
-			elif savType == SavTypes.Type.RAM_DUMP or savType == SavTypes.Type.FRAM_DUMP:
-				firstPictureAddress="02000"
-				file.seek(int(firstPictureAddress, 16))
-
+				write_image(arr, file_path, output_folder, i, bank, savType, file_processed_callback)
+			elif savType == SavTypes.Type.ORIGINAL_RAM_DUMP or savType == SavTypes.Type.FRAM_DUMP:
+				skip_header(file)
 				while read_image_data(file, arr):
 					write_image(arr, file_path, output_folder, i, bank, savType, file_processed_callback)
-					read_metadata(file)
 
 					if end_of_bank(file):
 						i = 1
 						bank += 1
-						file.seek(file.tell() + int(firstPictureAddress, 16))
+						skip_header(file)
 					else:
 						i += 1
 			else:
 				file_processed_callback("Unsupported file size: {}".format(file_size))
 
-			print("timerConv: {} seconds".format(timerConv.elapsed))
+		if print_chrono:
+			print("= timerConv: {} seconds".format(timerConv.elapsed))
 
 	except Exception as err:
 		print("Cannot process file {} : {}".format(file_path, err))
+		raise err
 
 
 def convert_folder(input_folder, output_folder, file_processed_callback = None):

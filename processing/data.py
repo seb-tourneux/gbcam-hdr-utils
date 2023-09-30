@@ -107,8 +107,10 @@ def make_gif(images_folder, output_folder, scale_factor, gifFrameDurationMs, bor
 	
 	print("Saved {}".format(gif_filename))
 
-def save_image_array(arr, path):
-	arr=numpy.array(numpy.round(255.0*arr),dtype=numpy.uint8)
+def save_image_array(arr, conv_to_255, path):
+	if conv_to_255:
+		arr = numpy.round(255.0*arr)
+	arr= numpy.array(arr,dtype=numpy.uint8)
 	pilImg = PILImage.fromarray(arr)
 # 	exif_data = {
 # 		271: "Gameboy Camera",
