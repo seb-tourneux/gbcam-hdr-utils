@@ -38,6 +38,8 @@ A graphical interface and command line interface are available.
 - [x] Support Photo rolls dump (2048Ko)
 - [x] CLI
 - [x] GUI
+- [ ] read/write metadata
+- [ ] ignore deleted pictures
 
 ### Organize
 - [x] GUI
@@ -57,6 +59,7 @@ A graphical interface and command line interface are available.
 
 #### Nice to have
 - [ ] pictures previews
+- [ ] input filenames and nb of files
 - [ ] save config (last opened tab, paths for each step, settings)
 
 ### Code

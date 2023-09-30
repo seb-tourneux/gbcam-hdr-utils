@@ -40,10 +40,10 @@ def copy_set_paths(sets_paths, output_dir):
 			shutil.copy(path, new_path)
 
 
-def append_current_set(sets_paths, current_set, file_processed_callback):
+def append_current_set(sets_paths, current_set, completion, file_processed_callback):
 	paths_only = list(zip(*current_set))[1]
 	if file_processed_callback:
-		file_processed_callback("Set #{} : {}".format(len(sets_paths), set_infos(paths_only)))
+		file_processed_callback("Set #{} : {}".format(len(sets_paths), set_infos(paths_only)), completion)
 	sets_paths.append(deepcopy(paths_only))
 	
 
@@ -52,18 +52,20 @@ def append_current_set(sets_paths, current_set, file_processed_callback):
 # As HDR images gradually increases (or decreases) exposure
 # we can detect big differences of luminosity in sequences of images.
 # Most of the time it should detect (almost full black -> almost full white) or (almost full white -> almost full black)
-def separate_hdr_sets(input_dir, output_dir, file_processed_callback = None):
+def separate_hdr_sets(input_dir, output_dir, update_callback = None):
 	print("Processing {}".format(input_dir))
 
+
 	files = files_utils.get_image_files(input_dir)
-	file_processed_callback("Found {} files".format(len(files)))
+	n = len(files)
+	update_callback("Found {} files".format(n))
 	
 	arrays_paths = data.get_arrays_and_path_from_file_list(files)
 	
 	sets_paths = []
 	current_set = []
 	ref_mean = arrays_paths[0][0].mean()
-	for arr, path in arrays_paths:
+	for i, (arr, path) in enumerate(arrays_paths):
 		cur_mean = arr.mean()
 		
 		if abs(cur_mean - ref_mean) > threshold :
@@ -77,7 +79,7 @@ def separate_hdr_sets(input_dir, output_dir, file_processed_callback = None):
 				if (with_dup != without_dup):
 					print("Remove {} duplicates".format(with_dup-without_dup))
 				
-			append_current_set(sets_paths, current_set, file_processed_callback)
+			append_current_set(sets_paths, current_set, i / n, update_callback)
 			current_set = []
 		
 		#print("mean {} file {} ".format(cur_mean, path))
@@ -85,9 +87,7 @@ def separate_hdr_sets(input_dir, output_dir, file_processed_callback = None):
 		current_set.append((arr, path))
 		ref_mean = cur_mean
 	
-		paths_only = list(zip(*current_set))[1]
-
-	append_current_set(sets_paths, current_set, file_processed_callback)
+	append_current_set(sets_paths, current_set, 1.0, update_callback)
 	copy_set_paths(sets_paths, output_dir)
 
 

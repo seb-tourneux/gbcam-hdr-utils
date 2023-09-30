@@ -42,5 +42,5 @@ def launch():
 	window = MainWindow()
 	window.update()
 	window.show()
-	window.resize(1200, 500)
+	window.resize(1200, 800)
 	sys.exit(app.exec())

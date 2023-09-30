@@ -12,20 +12,31 @@ from chrono import Timer
 class SavTypes():
 	Type = Enum('Type', ['SINGLE', 'ORIGINAL_RAM_DUMP', 'FRAM_DUMP'])
 
+	single_size = 3_584
+	original_RAM_dump_size = 131_072
+	
 	@staticmethod
 	def get_type(file_size):
-		singleSize = 3_584
-		originalRAMDumpSize = 131_072
-		if file_size == 3_584: # 4 KiB
+
+		if file_size == SavTypes.single_size: # 4 KiB
 			return SavTypes.Type.SINGLE
-		elif file_size == 131_072: # 128 KiB
+		elif file_size == SavTypes.original_RAM_dump_size: # 128 KiB
 			return SavTypes.Type.ORIGINAL_RAM_DUMP
-		elif file_size % originalRAMDumpSize == 0:
+		elif file_size % SavTypes.original_RAM_dump_size == 0:
 			# n banks
 			#1024 KiB (8 banks), 2048 KiB (16 banks), etc
 			return SavTypes.Type.FRAM_DUMP
 		else:
 			return None
+
+	@staticmethod
+	def get_nb_images(file_size):
+		if file_size == SavTypes.single_size:
+			return 1
+		elif file_size == SavTypes.original_RAM_dump_size:
+			return 30
+		else:
+			return (file_size / SavTypes.original_RAM_dump_size) * 30
 
 print_chrono = False
 nb_tiles = 224 # 128*112/64 : 128*112 total pixels, 8*8 pixels per tile
@@ -114,10 +125,13 @@ def get_output_path(output_folder, input_file, i, bank, savType):
 	out_file = "{}/{}{}.png".format(output_folder, filename, suffix)
 	return  os.path.normpath(out_file)
 
-def write_image(arr, file_path, output_folder, i, bank, savType, file_processed_callback = None):
+def write_image(arr, file_path, output_folder, i, bank, savType, nb_images_processed, total_nb_images, update_callback = None):
 	out_path = get_output_path(output_folder, file_path, i, bank, savType)
 	data.save_image_array(arr, False, out_path)
-	file_processed_callback("=== Saved {}".format(out_path))
+	
+	nb_images_processed[0] += 1 # workaround because int are immutable
+	if update_callback:
+		update_callback("=== Saved {}".format(out_path), nb_images_processed[0] / total_nb_images)
 
 def end_of_bank(file):
 	pos = file.tell()
@@ -127,7 +141,7 @@ def skip_header(file):
 	firstPictureAddress="02000"
 	file.seek(file.tell() + int(firstPictureAddress, 16))
 
-def convert_file(file_path, output_folder, file_processed_callback = None):
+def convert_file(file_path, output_folder, nb_images_processed, total_nb_images, update_callback = None):
 	try:
 		file = open(file_path, 'rb')
 
@@ -140,11 +154,11 @@ def convert_file(file_path, output_folder, file_processed_callback = None):
 			bank = 1
 			if savType == SavTypes.Type.SINGLE:
 				read_image_data(file, arr)
-				write_image(arr, file_path, output_folder, i, bank, savType, file_processed_callback)
+				write_image(arr, file_path, output_folder, i, bank, savType, nb_images_processed, total_nb_images, update_callback)
 			elif savType == SavTypes.Type.ORIGINAL_RAM_DUMP or savType == SavTypes.Type.FRAM_DUMP:
 				skip_header(file)
 				while read_image_data(file, arr):
-					write_image(arr, file_path, output_folder, i, bank, savType, file_processed_callback)
+					write_image(arr, file_path, output_folder, i, bank, savType, nb_images_processed, total_nb_images, update_callback)
 
 					if end_of_bank(file):
 						i = 1
@@ -153,7 +167,7 @@ def convert_file(file_path, output_folder, file_processed_callback = None):
 					else:
 						i += 1
 			else:
-				file_processed_callback("Unsupported file size: {}".format(file_size))
+				update_callback("Unsupported file size: {}".format(file_size))
 
 		if print_chrono:
 			print("= timerConv: {} seconds".format(timerConv.elapsed))
@@ -162,17 +176,25 @@ def convert_file(file_path, output_folder, file_processed_callback = None):
 		print("Cannot process file {} : {}".format(file_path, err))
 		raise err
 
+def folder_nb_images(input_sav_files):
+	count_nb_images = 0
+	for f in input_sav_files:
+		file_size = os.path.getsize(f)
+		count_nb_images += SavTypes.get_nb_images(file_size)
+	return count_nb_images
 
-def convert_folder(input_folder, output_folder, file_processed_callback = None):
+def convert_folder(input_folder, output_folder, update_callback = None):
 	input_sav_files = files_utils.get_sav_files(input_folder)
 	if not input_sav_files:
-		if file_processed_callback:
-			file_processed_callback("Not .sav files found in directory \"{}\"".format(input_folder))
+		if update_callback:
+			update_callback("Not .sav files found in directory \"{}\"".format(input_folder))
 	else:
+		total_nb_images = folder_nb_images(input_sav_files)
+		i = [0]
 		for f in input_sav_files:
-			if file_processed_callback:
-				file_processed_callback("= Converting {}...".format(f))
+			if update_callback:
+				update_callback("= Converting {}...".format(f))
 
-			convert_file(f, output_folder, file_processed_callback)
+			convert_file(f, output_folder, i, total_nb_images, update_callback)
 
 

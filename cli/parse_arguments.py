@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from datetime import datetime
 
 def add_in_out_folder_args(parser):
 	required = parser.add_argument_group('required arguments')
@@ -49,3 +50,14 @@ def parse_arguments():
 	check_process_options(args, parser_process)
 
 	return args
+
+def print_cli(text, completion = None):
+	
+	completion_text = ""
+	if completion:
+		completion_text = "{:.2f}%".format(100*completion).rjust(7)
+		completion_text = "[{}]".format(completion_text)
+
+	time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+	
+	print("[{}]{} {}".format(time, completion_text, text))

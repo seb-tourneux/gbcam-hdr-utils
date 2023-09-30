@@ -95,6 +95,8 @@ class WidgetProcess(WidgetCommon):
 			options['scale_factor'] != 1])
 
 	def do_it(self):
+		self.job_start()
+
 		if not self.check_folders():
 			return
 
@@ -113,6 +115,6 @@ class WidgetProcess(WidgetCommon):
 			self.add_text("Nothing to do")
 
 		(in_folder, out_folder) = self.folders_selector_widget.get_folders()
-		process_batch.process_batch(in_folder, out_folder, options, self.add_text)
+		process_batch.process_batch(in_folder, out_folder, options, self.update)
 
 		self.job_done()
