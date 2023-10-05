@@ -1,0 +1,37 @@
+
+name: Package Application
+
+on:
+  push:
+    paths:
+    - 'version.txt'
+    - '.github/workflows/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    env:
+      GITHUB_CONTEXT: ${{ toJson(github) }}
+      
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['windows-latest', 'ubuntu-latest', 'macos-latest']
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - run: echo "$GITHUB_CONTEXT"
+    - run: pip install -r requirements.txt pyinstaller
+    #- run: pyinstaller --onefile gbcam_hdr_utils_gui.py
+    - run: pyinstaller gbcam_hdr_utils_gui.py
+    - run: ls dist/
+    
+    - uses: actions/upload-artifact@v2
+      with:
+        name: "gbcam-hdr-utils-${{ github.sha }}-${{ matrix.os }}"
+        path: "dist/*"
