@@ -1,43 +1,56 @@
 from argparse import ArgumentParser
 from datetime import datetime
 
+processing_actions=[
+("average","Blend all images by averaging them"),
+("gif_ascend", "Create a gif in the order of the input images [1..n]"),
+("gif_descend", "Create a gif in the reverse order of the input images [n..1]"),
+("gif_depth", "Create a gif by incrementaly blending more and more images [n/2, n/2+1, n/2+1+n, ...]")
+]
+
 def add_in_out_folder_args(parser):
 	required = parser.add_argument_group('required arguments')
 	required.add_argument("-i", "--input_folder", dest="input_folder", required=True,
-                    help="Input folder of the pictures to be processed", metavar="input_folder")
+                    help="Input folder of the pictures to be processed")
 
 	required.add_argument("-o", "--output_folder", dest="output_folder", required=True,
-	                    help="Folder to output the results", metavar="output_folder")
+	                    help="Folder to output the results")
 
 def add_subparser_convert(subparsers):
 	parser_convert = subparsers.add_parser('convert', help='Convert .sav files to image files')
-	add_in_out_folder_args(parser_convert)
+	#add_in_out_folder_args(parser_convert)
 
 def add_subparser_organize(subparsers):
 	parser_organize = subparsers.add_parser('organize', help='Organize AEB sequences into separate folders')
-	add_in_out_folder_args(parser_organize)
+	#add_in_out_folder_args(parser_organize)
 
 def add_subparser_process(subparsers):
 	parser_process = subparsers.add_parser('process', help='Process pictures sets : average, create gifs. Processing is done subfolder by subfolder')
-	processing_actions=["average", "gif_ascend", "gif_descend", "gif_depth"]
-	for act in processing_actions:
-		parser_process.add_argument("--{}".format(act), action="store_true")
+	for (act, help_msg) in processing_actions:
+		parser_process.add_argument("--{}".format(act), action="store_true", help=help_msg)
+	parser_process.add_argument("--gif_frame_duration", help="Duration of 1 frame of the gif generated (ms)", dest="gif_frame_duration", default=100, type=int)
+	parser_process.add_argument("--scale", help="Scaling factor", dest="scale_factor", default=1, type=int)
+	parser_process.add_argument("--border_path", help="Path to a 160x144 border image", dest="border_path", default=None)
+
 	add_in_out_folder_args(parser_process)
 	return parser_process
 
 def add_subparser_stitch(subparsers):
 	parser_stitch = subparsers.add_parser('stitch', help='Stitch pictures together')
-	add_in_out_folder_args(parser_stitch)
+	#add_in_out_folder_args(parser_stitch)
 
 def check_process_options(args, parser_process):
 	if args.action == "process":
 		args_dict = vars(args)
-		if not any(args_dict[process_act] for process_act in processing_actions):
-			parser_process.error('At least one processing action is required amongst {}'.format(processing_actions))
+		if not any(args_dict[process_act] for (process_act, _) in processing_actions):
+			parser_process.error('At least one processing action is required amongst: {}'.format(processing_actions))
 
 def parse_arguments():
 	parser = ArgumentParser(prog='gbcam-hdr-utils',
 	                    description='Utilities for processing HDR Gameboy Camera pictures.')
+
+	add_in_out_folder_args(parser)
+
 	subparsers = parser.add_subparsers(dest='action', help='Action to apply', required=True)
 	
 	add_subparser_convert(subparsers)
@@ -61,3 +74,19 @@ def print_cli(text, completion = None):
 	time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
 	
 	print("[{}]{} {}".format(time, completion_text, text))
+
+def parse_process_options(args):
+	print(args)
+	#scale_factor = self.spin_box_scale_factor.value() if self.scale_factor_widget.isChecked() else 1
+	scale_factor = 1
+	#border_path = self.border_file_selector.get_folder() if self.checkbox_add_border.isChecked() else None # todo get file
+	border_path = None
+	options = {'gif_first_to_last' : args.gif_ascend,
+		    'gif_last_to_first' : args.gif_descend,
+			'gif_depth' : args.gif_depth,  # todo
+			'blend_average' : args.average,
+			'gif_frame_duration' : args.gif_frame_duration, #todo
+			'scale_factor' : args.scale_factor,
+			'border_path' : args.border_path
+		 }
+	return options

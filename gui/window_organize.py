@@ -2,6 +2,8 @@ from PySide6.QtWidgets import QLabel, QGridLayout
 
 from .window_common import *
 import os
+import processing.organizer as organizer
+
 
 class WidgetOrganize(WidgetCommon):
 

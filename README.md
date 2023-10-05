@@ -3,18 +3,19 @@
 Utilities and GUI for processing HDR Gameboy Camera pictures.
 
 ## Features
-For HDR image processing, each step can be done successively. For single image processing, the "Process" step can also be interesting.
+For HDR image processing, each of the steps is meant to be done successively. For single image processing, the "Process" step can also be interesting.
+Note that no file is modified nor deleted, each step only creates new files in the output folder.
 
 ### Convert
-Convert a .sav dump to .png files. Supports single picture dump (4 KiB), original ram dump (128 KiB) and multiple ram dump concatenated in the same file (such as [PHOTO!](https://github.com/untoxa/gb-photo) dump).
+Convert a `.sav` dump to `.png` files. Supports single picture dump (4 KiB), original ram dump (128 KiB) and multiple ram dump concatenated in the same file (n times 128 KiB, such as [PHOTO!](https://github.com/untoxa/gb-photo) dump).
 
 ### Organize
 Used with AEB sequences : sequence of pictures of the same subject with increasing or decreasing exposure time. From a folder containing several AEB sequences, separate each sequence into a specific folder. This is done by comparing two successive pictures (ordered by names), so input pictures order is important.
 
 ### Process
 Different processing utilities:
-* Blend AEB sequences (subfolder by subfolder)
-* Make gifs from folder of pictures
+* blend AEB sequences (subfolder by subfolder)
+* make gifs from folder of pictures
 * add a border
 * scale the picture
 
@@ -24,7 +25,17 @@ When using the graphical interface, one can approve or disprove each found match
 The output is several png images, with transparency that can be opened as layers in an image processing software, for further processing.
 
 ## Interface
+
 A graphical interface and command line interface are available.
+
+### Command line
+
+```console
+python gbcam_hdr_utils_cli.py -i path/to/input_folder -o path/to/output_folder <action> [OPTIONS]
+```
+`<action>` being one of {`convert`,`organize`,`process`,`stitch`}
+
+Use `python gbcam_hdr_utils_cli.py <action> --help`  for further help about a specific action.
 
 ## References/Acknowledgements
 * [Structure of the Gameboy Camera Save Data](https://funtography.online/wiki/Structure_of_the_Game_Boy_Camera_Save_Data)
@@ -39,18 +50,18 @@ A graphical interface and command line interface are available.
 - [x] CLI
 - [x] GUI
 - [ ] read/write metadata
-- [ ] ignore deleted pictures
+- [ ] ignore deleted pictures/chech checksum ?
 
 ### Organize
 - [x] GUI
 - [x] link to core
-- [ ] CLI
+- [x] CLI
 
 ### Process
 - [x] GUI
 - [x] link to core
 - [ ] implement increasing depth
-- [ ] CLI
+- [x] CLI
 
 ### Stitch
 - [ ] GUI
@@ -66,13 +77,4 @@ A graphical interface and command line interface are available.
 
 - [ ] code structure (`src`) relative imports
 - [ ]  `__main__.py`,  `__init__.py`
-
-
-
-
-
-
-
-
-
 
