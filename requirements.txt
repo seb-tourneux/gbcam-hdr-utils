@@ -1,3 +1,4 @@
+chrono==1.0.2
 bitstring==4.1.2
 matplotlib==3.3.4
 natsort==8.4.0
