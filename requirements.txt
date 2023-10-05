@@ -1,0 +1,10 @@
+chrono==1.0.2
+bitstring==4.1.2
+matplotlib==3.3.4
+natsort==8.4.0
+opencv_contrib_python==4.8.0.76
+opencv_python==4.8.0.76
+scipy
+PySide6==6.5.2
+PySide6-Addons==6.5.2
+PySide6-Essentials==6.5.2 

@@ -1,3 +1,6 @@
+data/frame_original.png
+output/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
