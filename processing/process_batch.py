@@ -19,8 +19,11 @@ def process_batch(input_dir, output_dir, options, update_callback):
 			res = process.average(arrays)
 			data.finalizeAndSave(res, options["scale_factor"], output_dir, d, "average")
 
-		if options["gif_first_to_last"]:
-			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], border_path)
-
-		if options["gif_last_to_first"]:
-			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], border_path, True)
+		if options["gif_ascend"]:
+			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], "gif_ascend", border_path)
+		if options["gif_descend"]:
+			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], "gif_descend", border_path)
+		if options["gif_depth"]:
+			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], "gif_depth", border_path)
+		if options["gif_depth_reverse"]:
+			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], "gif_depth_reverse", border_path)

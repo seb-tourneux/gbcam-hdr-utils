@@ -4,6 +4,7 @@ import numpy
 from PIL.ImageQt import ImageQt
 import os
 import processing.infos as infos
+import processing.process as process
 
 def crop(img_pil):
 	s = img_pil.size
@@ -20,6 +21,15 @@ def paste_in_frame(picture_img, border_img):
 		return res
 	return img
 
+def PIL_to_array(img, border_img = None):
+	img = img.convert('L')
+	img = crop(img)
+	
+	img = paste_in_frame(img, border_img)
+	
+	arr = numpy.array(img,dtype=float) / 255
+	return arr
+
 def get_arrays_and_path_from_file_list(imlist, border_path=None):
 	if not imlist:
 		return
@@ -35,14 +45,8 @@ def get_arrays_and_path_from_file_list(imlist, border_path=None):
 
 	array_path_list = []
 	for img_path in imlist:
-		
 		img = PILImage.open(img_path)
-		img = img.convert('L')
-		img = crop(img)
-		
-		img = paste_in_frame(img, border_img)
-		
-		arr = numpy.array(img,dtype=float) / 255
+		arr = PIL_to_array(img, border_img)
 		array_path_list.append( (arr, img_path) )
 		
 	return array_path_list
@@ -77,16 +81,26 @@ def finalizeAndSave(arr, scale_factor, output_dir, aFolder, aSuffix):
 	imgOutput = output_dir + "/" + lastDir + "_" + aSuffix + ".png"
 	out.save(imgOutput)
 	print("Saved {}".format(imgOutput))
+
+def images_anim_depth(frames):
+	arrays = [PIL_to_array(img) for img in frames]
+	pil_avg = []
+	for i, _ in enumerate(arrays):
+		arr = process.average(arrays[:i+1]) # average from 0 to i
+		arr=numpy.array(numpy.round(255.0*arr),dtype=numpy.uint8)
+		pil_avg.append(PILImage.fromarray(arr,mode="L"))
 	
-def make_gif(images_folder, output_folder, scale_factor, gifFrameDurationMs, border_path = None, reverse = False):
+	return pil_avg
+
+def make_gif(images_folder, output_folder, scale_factor, gifFrameDurationMs, method, border_path = None):
 	lastDir = os.path.basename(os.path.normpath(images_folder))
 	imgGifOutput = output_folder + "/" + lastDir + "_anim"
 
 	allfiles=os.listdir(images_folder)
 	im_files=[images_folder+"/"+filename for filename in allfiles if  filename[-4:] in [".png",".PNG", ".bmp"]]
 	im_files.sort()
-	if reverse:
-		im_files.reverse()
+	
+
 	
 	border_img = None
 	if border_path is not None:
@@ -94,13 +108,25 @@ def make_gif(images_folder, output_folder, scale_factor, gifFrameDurationMs, bor
 		
 
 	frames = [PILImage.open(image) for image in im_files]
+	file_suffix = ""
+	if method == "gif_descend":
+		frames.reverse()
+		file_suffix = "_reverse"
+	if method == "gif_depth_reverse":
+		frames.reverse()
+		frames = images_anim_depth(frames)
+		file_suffix = "_depth_reverse"
+	if method == "gif_depth":
+		frames = images_anim_depth(frames)
+		file_suffix = "_depth"
+		
 	frames = list(map(lambda f: crop(f), frames))
 	frames = list(map(lambda f: paste_in_frame(f, border_img), frames))
 	frames = list(map(lambda f: resize_PIL(f, scale_factor), frames))
 
 	frame_one = frames[0]
 	
-	gif_filename = "{}_{}ms{}.gif".format(imgGifOutput, gifFrameDurationMs, "_reverse" if reverse else "")
+	gif_filename = "{}_{}ms{}.gif".format(imgGifOutput, gifFrameDurationMs, file_suffix)
 
 	frame_one.save(gif_filename, format="GIF", append_images=frames[1:],
 									save_all=True, duration=gifFrameDurationMs, loop=0)

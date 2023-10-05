@@ -5,7 +5,8 @@ processing_actions=[
 ("average","Blend all images by averaging them"),
 ("gif_ascend", "Create a gif in the order of the input images [1..n]"),
 ("gif_descend", "Create a gif in the reverse order of the input images [n..1]"),
-("gif_depth", "Create a gif by incrementaly blending more and more images [n/2, n/2+1, n/2+1+n, ...]")
+("gif_depth", "Create a gif by incrementaly blending more and more images [1, 1+2, ..., 1+...+n]"),
+("gif_depth_reverse", "Create a gif by incrementaly blending more and more images [n, n+(n-1), n+...+1]")
 ]
 
 def add_in_out_folder_args(parser):
@@ -22,6 +23,7 @@ def add_subparser_convert(subparsers):
 
 def add_subparser_organize(subparsers):
 	parser_organize = subparsers.add_parser('organize', help='Organize AEB sequences into separate folders')
+	parser_organize.add_argument("-t", "--threshold", help="Threshold of luminosity between two consecutive image to be separated", dest="threshold", default=0.5, type=float)
 	#add_in_out_folder_args(parser_organize)
 
 def add_subparser_process(subparsers):
@@ -32,7 +34,7 @@ def add_subparser_process(subparsers):
 	parser_process.add_argument("--scale", help="Scaling factor", dest="scale_factor", default=1, type=int)
 	parser_process.add_argument("--border_path", help="Path to a 160x144 border image", dest="border_path", default=None)
 
-	add_in_out_folder_args(parser_process)
+	#add_in_out_folder_args(parser_process)
 	return parser_process
 
 def add_subparser_stitch(subparsers):
@@ -43,13 +45,13 @@ def check_process_options(args, parser_process):
 	if args.action == "process":
 		args_dict = vars(args)
 		if not any(args_dict[process_act] for (process_act, _) in processing_actions):
-			parser_process.error('At least one processing action is required amongst: {}'.format(processing_actions))
+			options_str = [ "--{}".format(process_act) for (process_act, _) in processing_actions]
+			parser_process.error('At least one processing action is required amongst: {}'.format(options_str))
 
 def parse_arguments():
 	parser = ArgumentParser(prog='gbcam-hdr-utils',
 	                    description='Utilities for processing HDR Gameboy Camera pictures.')
 
-	add_in_out_folder_args(parser)
 
 	subparsers = parser.add_subparsers(dest='action', help='Action to apply', required=True)
 	
@@ -57,6 +59,8 @@ def parse_arguments():
 	add_subparser_organize(subparsers)
 	parser_process = add_subparser_process(subparsers)
 	add_subparser_stitch(subparsers)
+
+	add_in_out_folder_args(parser)
 
 	args = parser.parse_args()
 
@@ -76,14 +80,10 @@ def print_cli(text, completion = None):
 	print("[{}]{} {}".format(time, completion_text, text))
 
 def parse_process_options(args):
-	print(args)
-	#scale_factor = self.spin_box_scale_factor.value() if self.scale_factor_widget.isChecked() else 1
-	scale_factor = 1
-	#border_path = self.border_file_selector.get_folder() if self.checkbox_add_border.isChecked() else None # todo get file
-	border_path = None
-	options = {'gif_first_to_last' : args.gif_ascend,
-		    'gif_last_to_first' : args.gif_descend,
+	options = {'gif_ascend' : args.gif_ascend,
+		    'gif_descend' : args.gif_descend,
 			'gif_depth' : args.gif_depth,  # todo
+			'gif_depth_reverse' : args.gif_depth_reverse,
 			'blend_average' : args.average,
 			'gif_frame_duration' : args.gif_frame_duration, #todo
 			'scale_factor' : args.scale_factor,

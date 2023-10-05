@@ -4,10 +4,7 @@ import os
 import shutil
 from copy import deepcopy
 
-input_dir = "F:/MySofts/GBCam_PicNRec_v1.7/2023-09-04_21-03-46"
-output_dir = "E:/Data/Prods/2022/Photo/GameboyCamera/2023_09_03/HDR_no_dupl"
-
-threshold = 0.5
+threshold = 0.1
 
 def set_infos(set_paths):
 	basenames = [os.path.basename(p) for p in set_paths]
@@ -52,7 +49,7 @@ def append_current_set(sets_paths, current_set, completion, file_processed_callb
 # As HDR images gradually increases (or decreases) exposure
 # we can detect big differences of luminosity in sequences of images.
 # Most of the time it should detect (almost full black -> almost full white) or (almost full white -> almost full black)
-def separate_hdr_sets(input_dir, output_dir, update_callback = None):
+def separate_hdr_sets(input_dir, output_dir, threshold, update_callback = None):
 	print("Processing {}".format(input_dir))
 
 
@@ -70,7 +67,7 @@ def separate_hdr_sets(input_dir, output_dir, update_callback = None):
 		
 		if abs(cur_mean - ref_mean) > threshold :
 			#todo option
-			remove_dup = True
+			remove_dup = False # todo setting
 			if remove_dup:
 				with_dup = len(current_set)
 				unique = {array[0].tostring(): array for array in current_set}

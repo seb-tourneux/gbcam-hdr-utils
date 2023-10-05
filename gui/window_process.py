@@ -21,12 +21,14 @@ class WidgetProcess(WidgetCommon):
 		gif_layout.setAlignment(Qt.AlignTop)
 		gif_widget.setLayout(gif_layout)
 
-		self.checkbox_gif_first_to_last = QCheckBox("First to last", self)
-		self.checkbox_gif_last_to_first = QCheckBox("Last to first", self)
+		self.checkbox_gif_first_to_last = QCheckBox("Picture by picture", self)
+		self.checkbox_gif_last_to_first = QCheckBox("Picture by picture (reverse)", self)
 		self.checkbox_gif_depth = QCheckBox("Increasing depth", self)
+		self.checkbox_gif_depth_reverse = QCheckBox("Increasing depth (reverse)", self)
 		gif_layout.addWidget(self.checkbox_gif_first_to_last)
 		gif_layout.addWidget(self.checkbox_gif_last_to_first)
 		gif_layout.addWidget(self.checkbox_gif_depth)
+		gif_layout.addWidget(self.checkbox_gif_depth_reverse)
 
 		duration_layout = QVBoxLayout()
 		duration_layout.setAlignment(Qt.AlignTop)
@@ -87,9 +89,10 @@ class WidgetProcess(WidgetCommon):
 	@staticmethod
 	def has_work_to_do(options):
 		return any([
-			options['gif_first_to_last'],
-			options['gif_last_to_first'],
+			options['gif_ascend'],
+			options['gif_descend'],
 			options['gif_depth'],
+			options['gif_depth_reverse'],
 			options['blend_average'],
 			options['border_path'] != None,
 			options['scale_factor'] != 1])
@@ -102,9 +105,10 @@ class WidgetProcess(WidgetCommon):
 
 		scale_factor = self.spin_box_scale_factor.value() if self.scale_factor_widget.isChecked() else 1
 		border_path = self.border_file_selector.get_folder() if self.checkbox_add_border.isChecked() else None # todo get file
-		options = {'gif_first_to_last' : self.checkbox_gif_first_to_last.isChecked(),
-			    'gif_last_to_first' : self.checkbox_gif_last_to_first.isChecked(), # todo
-				'gif_depth' : self.checkbox_gif_depth.isChecked(),  # todo
+		options = {'gif_ascend' : self.checkbox_gif_first_to_last.isChecked(),
+			    'gif_descend' : self.checkbox_gif_last_to_first.isChecked(),
+				'gif_depth' : self.checkbox_gif_depth.isChecked(),
+				'gif_depth_reverse' : self.checkbox_gif_depth_reverse.isChecked(),
 				'blend_average' : self.checkbox_blend_average.isChecked(),
 				'gif_frame_duration' : self.spin_box_frame_duration.value(),
 				'scale_factor' : scale_factor,
