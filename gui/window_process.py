@@ -63,7 +63,7 @@ class WidgetProcess(WidgetCommon):
 		self.checkbox_add_border.setChecked(False)
 
 		# todo file selector, not folder
-		self.border_file_selector = FolderSelectorLineWidget()
+		self.border_file_selector = FolderSelectorLineWidget(True)
 		add_border_layout.addWidget(self.border_file_selector)
 		self.checkbox_add_border.setLayout(add_border_layout)
 

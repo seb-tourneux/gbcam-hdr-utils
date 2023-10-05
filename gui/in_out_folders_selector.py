@@ -5,9 +5,10 @@ import platform
 import subprocess
 
 class FolderSelectorLineWidget(QWidget):
-	def __init__(self):
+	def __init__(self, is_file = False):
 		super(FolderSelectorLineWidget, self).__init__()
 
+		self.is_file = is_file
 		layout = QGridLayout()
 		self.setLayout(layout)
 		
@@ -33,7 +34,12 @@ class FolderSelectorLineWidget(QWidget):
 
 	def open_file_dialog(self):
 		dialog = QFileDialog(self)
-		dialog.setFileMode(QFileDialog.FileMode.Directory)
+		if self.is_file:
+			dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+			dialog.setNameFilters(["Images (*.png)"])
+			dialog.selectNameFilter("Images (*.png)")
+		else:
+			dialog.setFileMode(QFileDialog.FileMode.Directory)
 		if dialog.exec():
 			self.folderpath = dialog.selectedFiles()
 			self.folder_line_edit.setText(self.folderpath[0])

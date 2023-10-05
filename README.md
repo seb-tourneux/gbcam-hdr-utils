@@ -60,7 +60,7 @@ Use `python gbcam_hdr_utils_cli.py <action> --help`  for further help about a sp
 ### Process
 - [x] GUI
 - [x] link to core
-- [ ] implement increasing depth
+- [x] implement increasing depth
 - [x] CLI
 
 ### Stitch
