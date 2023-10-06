@@ -41,7 +41,10 @@ class WidgetStitch(WidgetCommon):
 	def try_match(self):
 		(self.res_try_match, self.res_merged_img) = align.process_one_match(self.unmatched_images, self.res_merged_img, self.accepted_images_delta, self.nb_fails)
 		(img_matches, img2, delta) = self.res_try_match
-		self.match_img_label.setPixmap(cv2_to_pixmap(img_matches))
+		if img_matches is None:
+			self.decline_match()
+		else:
+			self.match_img_label.setPixmap(cv2_to_pixmap(img_matches))
 
 	def get_completion(self):
 		return (self.nb_images_total-len(self.unmatched_images))/self.nb_images_total
@@ -63,13 +66,14 @@ class WidgetStitch(WidgetCommon):
 																   self.res_try_match[1], #img matched
 																   self.res_try_match[2], #delta
 																   accepted)	
+		self.result_img_label.setPixmap(cv2_to_pixmap(self.res_merged_img))
 		if accepted:
-			self.result_img_label.setPixmap(cv2_to_pixmap(self.res_merged_img))
 			self.update("Match accepted", self.get_completion())
 		else:
 			if self.nb_fails[0] > len(self.unmatched_images):
 				self.update("Could not find match for {} images".format(len(self.unmatched_images)), 1.0)
 				self.end()
+				return
 			else:
 				self.update("Match declined, will try later", self.get_completion())
 			

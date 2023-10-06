@@ -59,18 +59,21 @@ def find_delta(img1, img2):
 	#for m in matches:
 	#	print(match_ratio_fun(m))
 	
+	average_delta = None
 	if len(matches) != 0:
 		# cv2.drawMatchesKnn expects list of lists as matches.
 		to_print = list(map(lambda x : [x[0]], matches))
 		img3 = cv2.drawMatchesKnn(img1,kp1,img2,kp2,to_print,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 		
-	matches = list(map(lambda x : x[0], matches))
-	deltas = list(map(lambda x :compute_delta(x, kp1, kp2), matches))
-	array_deltas = np.array([*deltas])
+		matches = list(map(lambda x : x[0], matches))
+		deltas = list(map(lambda x :compute_delta(x, kp1, kp2), matches))
+		array_deltas = np.array([*deltas])
 	
+		average_delta = array_deltas.mean(axis=0)
+		average_delta = average_delta.astype(int)
+		
+	return (img3, img2, average_delta)
 
-	average_delta = array_deltas.mean(axis=0)
-	
 #	diff = array_deltas-average_delta
 #	print (array_deltas)
 #	print (average_delta)
@@ -78,7 +81,6 @@ def find_delta(img1, img2):
 #	variance = np.linalg.norm(diff, ord=2) 
 #	print("variance {}".format(variance))
 
-	return (img3, img2, average_delta.astype(int))
 
 def align_images(img1, img2, delta, accepted_images_delta):
 	image1 = img1
