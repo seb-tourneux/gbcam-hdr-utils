@@ -62,7 +62,7 @@ class WidgetCommon(QWidget):
 		completion_text = ""
 		if completion:
 			self.pbar.setValue(100*completion)
-			completion_text = "{:.2f}%".format(100*completion).rjust(7)
+			completion_text = "{:.2f}%".format(100*completion).rjust(8)
 			completion_text = "[{}]".format(completion_text)
 		
 		time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
