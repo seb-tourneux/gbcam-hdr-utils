@@ -64,8 +64,8 @@ Use `python gbcam_hdr_utils_cli.py <action> --help`  for further help about a sp
 - [x] CLI
 
 ### Stitch
-- [ ] GUI
-- [ ] link to core
+- [x] GUI
+- [x] link to core
 - [ ] CLI
 
 #### Nice to have
