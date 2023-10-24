@@ -48,10 +48,17 @@ Increase if a single sequence is incorrectly splitted into several sets.""")
 		max_nb_widget = QWidget(middle_widget)
 		max_nb_widget.setLayout(max_nb_layout)
 		
+		self.combo_split_mode = QComboBox()
+		self.combo_split_mode.addItems(organizer.Mode._member_names_)
+		
+		max_nb_layout.addWidget(self.combo_split_mode)
 		self.spin_box_max_nb = QSpinBox(minimum=1, maximum=100000000, value = 29, suffix=' images')
-		max_nb_layout.addWidget(QLabel("Skip sets bigger than"))
-		max_nb_widget.setToolTip("""Skip sets that are strictly bigger than this value.
-It can be usefull to skip video sets mixed with AEB sets.""")
+		max_nb_layout.addWidget(QLabel(" sets bigger than"))
+		max_nb_widget.setToolTip("""How to handle sets that are strictly bigger than this value.
+
+Split: can be used if several AEB sequences are not recognized as different.
+Skip: can be usefull to filter out some video sets mixed with AEB sets.
+Keep: keep the big set as is.""")
 		max_nb_layout.addWidget(self.spin_box_max_nb)
 		
 		middle_layout.addWidget(threshold_widget)
@@ -72,14 +79,15 @@ It can be usefull to skip video sets mixed with AEB sets.""")
 
 	def do_it(self):
 		self.job_start()
-		
+
 		if not self.check_folders():
 			return
 		
 		(in_folder, out_folder) = self.folders_selector_widget.get_folders()
 		threshold = WidgetOrganize.slider_val_to_threshold(self.threshold_slider.value())
 		max_nb_per_set = self.spin_box_max_nb.value()
+		mode = organizer.Mode(self.combo_split_mode.currentIndex()+1)
 
-		organizer.separate_hdr_sets(in_folder, out_folder, threshold, max_nb_per_set, self.update)
+		organizer.separate_hdr_sets(in_folder, out_folder, threshold, max_nb_per_set, mode, self.update)
 		
 		self.job_done()

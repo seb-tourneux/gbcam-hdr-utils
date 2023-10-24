@@ -3,8 +3,9 @@ import processing.files_utils as files_utils
 import os
 import shutil
 from copy import deepcopy
+from enum import Enum
 
-threshold = 0.1
+Mode = Enum('Mode', ['Split', 'Skip', 'Keep'])
 
 def set_infos(set_paths):
 	basenames = [os.path.basename(p) for p in set_paths]
@@ -38,17 +39,14 @@ def copy_set_paths(sets_paths, output_dir):
 def stop_size(current_set, max_nb_per_set):
 	return (max_nb_per_set != None) and (len(current_set) >= max_nb_per_set)
 
-def append_current_set(sets_paths, current_set, max_nb_per_set, completion, file_processed_callback):
-	
+def append_current_set(sets_paths, current_set, max_nb_per_set, mode, completion, file_processed_callback):
 
-	
 	paths_only = list(zip(*current_set))[1]
-	
-	
-	ignored_by_size = stop_size(current_set, max_nb_per_set)
+
+	ignored_by_size = (mode == Mode.Skip) and stop_size(current_set, max_nb_per_set)
 	if ignored_by_size:
 		if file_processed_callback:
-			file_processed_callback("Ignoring set because bigger than maximum of {} pictures : {}"\
+			file_processed_callback("=== Skipping set because bigger than maximum of {} pictures : {}"\
 						   .format(max_nb_per_set, set_infos(paths_only)),\
 								    completion)
 			return
@@ -65,7 +63,7 @@ def stop_distance(cur_mean, ref_mean, threshold):
 # As HDR images gradually increases (or decreases) exposure
 # we can detect big differences of luminosity in sequences of images.
 # Most of the time it should detect (almost full black -> almost full white) or (almost full white -> almost full black)
-def separate_hdr_sets(input_dir, output_dir, threshold, max_nb_per_set, update_callback = None):
+def separate_hdr_sets(input_dir, output_dir, threshold, max_nb_per_set, mode, update_callback = None):
 	print("Processing {}".format(input_dir))
 
 
@@ -81,11 +79,14 @@ def separate_hdr_sets(input_dir, output_dir, threshold, max_nb_per_set, update_c
 	for i, (arr, path) in enumerate(arrays_paths):
 		cur_mean = arr.mean()
 		
-		stopped_by_dist =  stop_distance(cur_mean, ref_mean, threshold)
+		stopped_by_dist = stop_distance(cur_mean, ref_mean, threshold)
+		stopped_by_size = mode == Mode.Split and stop_size(current_set, max_nb_per_set)
 		
-		if stopped_by_dist:
-			ignored_by_size = stop_size(current_set, max_nb_per_set)
-
+		if stopped_by_dist or stopped_by_size:
+			if stopped_by_size and not stopped_by_dist:
+				if update_callback:
+					update_callback("=== Splitting set because bigger than maximum of {} pictures" .format(max_nb_per_set), i/ n)
+					
 			#todo option
 			remove_dup = False # todo setting
 			if remove_dup:
@@ -96,7 +97,7 @@ def separate_hdr_sets(input_dir, output_dir, threshold, max_nb_per_set, update_c
 				if (with_dup != without_dup):
 					print("Remove {} duplicates".format(with_dup-without_dup))
 		
-			append_current_set(sets_paths, current_set, max_nb_per_set, i / n, update_callback)
+			append_current_set(sets_paths, current_set, max_nb_per_set, mode, i / n, update_callback)
 
 			
 			current_set = []
@@ -106,6 +107,6 @@ def separate_hdr_sets(input_dir, output_dir, threshold, max_nb_per_set, update_c
 		current_set.append((arr, path))
 		ref_mean = cur_mean
 	
-	append_current_set(sets_paths, current_set, max_nb_per_set, 1.0, update_callback)
+	append_current_set(sets_paths, current_set, max_nb_per_set, mode, 1.0, update_callback)
 	copy_set_paths(sets_paths, output_dir)
 

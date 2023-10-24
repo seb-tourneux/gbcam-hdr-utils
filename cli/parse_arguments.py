@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from datetime import datetime
+import processing.organizer as organizer
 
 processing_actions=[
 ("average","Blend all images by averaging them"),
@@ -23,8 +24,10 @@ def add_subparser_convert(subparsers):
 
 def add_subparser_organize(subparsers):
 	parser_organize = subparsers.add_parser('organize', help='Organize AEB sequences into separate folders')
-	parser_organize.add_argument("-t", "--threshold", help="Threshold of luminosity between two consecutive image to be separated", dest="threshold", default=0.5, type=float)
-	parser_organize.add_argument("-n", "--max_nb_per_set", help="Maximum number of images per set. Sets strictly bigger than this value will be skipped", dest="max_nb_per_set", default=None, type=int)
+	parser_organize.add_argument("-t", "--threshold", help="Threshold of luminosity between two consecutive image to be separated", dest="threshold", default=0.25, type=float)
+	parser_organize.add_argument("-n", "--max_nb_per_set", help="Maximum number of images per set. Sets strictly bigger than this value will be handled according to mode", dest="max_nb_per_set", default=29, type=int)
+	modes = [m.name.lower() for m in organizer.Mode]
+	parser_organize.add_argument("-m", "--mode", help="Mode to manage sets bigger than max_nb_per_set", choices=modes, dest="mode", default=organizer.Mode(1))
 	#add_in_out_folder_args(parser_organize)
 
 def add_subparser_process(subparsers):
