@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QHBoxLayou
 from .window_convert import *
 from .window_organize import *
 from .window_process import *
+from .window_stitch import *
 import processing.infos as infos
 
 
@@ -21,7 +22,7 @@ class MainWindow(QMainWindow):
 		tabwidget.addTab(WidgetConvert(), "Convert")
 		tabwidget.addTab(WidgetOrganize(), "Organize")
 		tabwidget.addTab(WidgetProcess(), "Process")
-		tabwidget.addTab(QLabel("TODO WidgetStitch()"), "Stitch")
+		tabwidget.addTab(WidgetStitch(), "Stitch")
 		
 		tabwidget.setTabToolTip(0, "Convert .sav files to .png")
 		tabwidget.setTabToolTip(1, "Organize AEB sequences into separate folders")

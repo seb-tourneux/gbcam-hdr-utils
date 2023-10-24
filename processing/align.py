@@ -10,9 +10,7 @@ input_dir = "E:/Data/Prods/2022/Photo/GameboyCamera/2023_09_03/align_poteau1"
 output_dir = "E:/Data/Prods/2022/Photo/GameboyCamera/2023_09_03/test_align1_res"
 
 
-array_paths = data.get_arrays_and_path_from_folder(input_dir)
-paths = list(list(zip(*array_paths))[1])
-arrays = list(list(zip(*array_paths))[0])
+
 
 
 
@@ -51,37 +49,31 @@ def find_delta(img1, img2):
 	match_threshold = 0.7
 	max_nb_matches = 5
 	
+	img3 = None
 	
 	matches = sorted(matches, key=match_ratio_fun) # sort best matches first
 	matches= matches[:max_nb_matches]
 	
+	# filter not good matches
+	matches = list(filter(lambda m : match_ratio_fun(m) < match_threshold, matches))
+	#for m in matches:
+	#	print(match_ratio_fun(m))
+	
+	average_delta = None
 	if len(matches) != 0:
 		# cv2.drawMatchesKnn expects list of lists as matches.
 		to_print = list(map(lambda x : [x[0]], matches))
 		img3 = cv2.drawMatchesKnn(img1,kp1,img2,kp2,to_print,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 		
-		plt.imshow(img3)
-		plt.title("best match score {}".format(match_ratio_fun(matches[0])))
-		plt.show()
-	else:
-		print("No match")
+		matches = list(map(lambda x : x[0], matches))
+		deltas = list(map(lambda x :compute_delta(x, kp1, kp2), matches))
+		array_deltas = np.array([*deltas])
 	
-	matches = list(filter(lambda m : match_ratio_fun(m) < match_threshold, matches))
-	for m in matches:
-		print(match_ratio_fun(m))
-
-	if len(matches) == 0:
-		return None
+		average_delta = array_deltas.mean(axis=0)
+		average_delta = average_delta.astype(int)
 		
-	matches = list(map(lambda x : x[0], matches))
-	
-	
-	deltas = list(map(lambda x :compute_delta(x, kp1, kp2), matches))
-	array_deltas = np.array([*deltas])
-	
+	return (img3, img2, average_delta)
 
-	average_delta = array_deltas.mean(axis=0)
-	
 #	diff = array_deltas-average_delta
 #	print (array_deltas)
 #	print (average_delta)
@@ -89,7 +81,6 @@ def find_delta(img1, img2):
 #	variance = np.linalg.norm(diff, ord=2) 
 #	print("variance {}".format(variance))
 
-	return average_delta.astype(int)
 
 def align_images(img1, img2, delta, accepted_images_delta):
 	image1 = img1
@@ -122,73 +113,94 @@ def align_images(img1, img2, delta, accepted_images_delta):
 	
 	accepted_images_delta = [(i,global_delta(d)) for (i, d) in accepted_images_delta ]
 
-	plt.imshow(new_image),plt.show()
-	
 	return new_image
 
 
 
-
-res = None
-
-images = [ cv2.imread(p) for p in paths ]
-
-accepted_images_delta = []
-
-manual_check = True
-
-img_size = np.array([images[0].shape[0], images[0].shape[1]])
-
-fail = 0
-while len(images) != 0 and fail < len(images):
-	print("Nb images to process {}".format(len(images)))
-	img = images.pop(0)
+def process_one_match(unmatched_images, res, accepted_images_delta, nb_fails):
+	img = unmatched_images.pop(0)
 	if res is None : 
-		res = img
+		res = img.copy()
 		accepted_images_delta.append((img, np.array([0,0]) ))
-	else:
-		delta = find_delta(res, img)
-		manual_reject = manual_check and input("Accept ? y/n: ") == 'n'
-		if (delta is None) or manual_reject :
-			images.append(img) # process later, maybe we'll find better matches
-			fail += 1
-			print("FAIL : nb images {}, nb fail {}".format(len(images), fail))
-		else:
+		img = unmatched_images.pop(0)
 
-			fail = 0
-			res = align_images(res, img, delta, accepted_images_delta)
+	d = find_delta(res, img)
+	return (d, res)
+		
+		
+		
+
+
+def process_match_accept_decline(unmatched_images, res, accepted_images_delta, nb_fails, img_matched, delta, accepted):
+	#manual_reject = manual_check and input("Accept ? y/n: ") == 'n'
+	if (delta is None) or (not accepted) :
+		unmatched_images.append(img_matched) # process later, maybe we'll find better matches
+		nb_fails[0] += 1
+		#print("FAIL : nb images {}, nb fail {}".format(len(unmatched_images), nb_fails))
+	else:
+
+		nb_fails[0] = 0
+		res = align_images(res, img_matched, delta, accepted_images_delta)
+	return res
+
+
+# accepted_images_delta = []
+
+# manual_check = True
+
+# res = None
+# nb_fails = [0]
+# while len(unmatched_images) != 0 and nb_fails[0] < len(unmatched_images):
+# 	process_one_match(unmatched_images, res, accepted_images_delta, nb_fails)
+
 			
 
-# manage some unmatched pictures
-extra = np.array([0,0])
-offset = np.array([20,20])
-if len(images) != 0:
-	extra = img_size + offset
+def save_layers(accepted_images_delta, unmatched_images, out_folder, set_name):
 
-deltas_global = list(list(zip(*accepted_images_delta))[1])
-minBox, maxBox = bounding_box(deltas_global)
+	if len(unmatched_images) > 0:
+		ref_img = unmatched_images[0]
+	elif len(accepted_images_delta) > 0:
+		ref_img = accepted_images_delta[0][0]
+	else:
+		return
+		
+	img_size = (ref_img.shape[0], ref_img.shape[1])
 
-# todo correct
-size_accepted = (maxBox[0]+img_size[1], maxBox[1]+img_size[0])
-total_size = (size_accepted[0] + extra[1], size_accepted[1] + extra[0])
-pos_unmatched = (size_accepted[0]+offset[1], size_accepted[1]+offset[0])
+	# manage some unmatched pictures
+	extra =(0,0)
+	offset = (20,20)
+	if len(unmatched_images) != 0:
+		extra = img_size + offset
+	
+	deltas_global = list(list(zip(*accepted_images_delta))[1])
+	minBox, maxBox = bounding_box(deltas_global)
+	
+	# todo correct
+	size_accepted = (maxBox[0]+img_size[1], maxBox[1]+img_size[0])
+	total_size = (size_accepted[0] + extra[1], size_accepted[1] + extra[0])
+	pos_unmatched = (size_accepted[0]+offset[1], size_accepted[1]+offset[0])
+	
+	# add match/umatched flag
+	res_images_delta = [(i,d,True) for (i,d) in accepted_images_delta]
+	res_images_delta.extend([(img, pos_unmatched, False) for img in unmatched_images])
 
-# add match/umatched flag
-res_images_delta = [(i,d,True) for (i,d) in accepted_images_delta]
-for img in images:
-	 # paste unmatched pictures at the bottom right
-	 # and add unmatched flag
-	res_images_delta.append((img, pos_unmatched, False))
+	background = Image.new("RGBA",total_size)
+	
+	blended_all = background.copy()
+	for (i, (img, delta, matched)) in enumerate(res_images_delta):
+		cur_bg = background.copy()
+		pilImg = Image.fromarray(img)
+		cur_bg.paste(pilImg, (delta[0], delta[1]))
+		blended_all.paste(pilImg, (delta[0], delta[1]))
+		cur_bg.save(out_folder + "/{}{}_{}.png".format(set_name, "" if matched else "_unmatched", i))
+	
+	suffix = "partial_stitch" if len(unmatched_images) > 0 else "stitch"
+	total_file_path = out_folder + "/all_{}_{}.png".format(set_name, suffix)
+	blended_all.save(total_file_path)
 
-
-background = Image.new("RGBA",total_size)
-
-for (i, (img, delta, matched)) in enumerate(res_images_delta):
-	cur_bg = background.copy()
-	pilImg = Image.fromarray(img)
-	cur_bg.paste(pilImg, (delta[0], delta[1]))
-	cur_bg.save(output_dir + "/img{}_{}.png".format("" if matched else "_unmatched", i))
-
-
-plt.imshow(res),plt.show()
-
+def load_folder_cv2(folder):
+	array_paths = data.get_arrays_and_path_from_folder(folder)
+	if not array_paths:
+		return None
+	unmatched_images = [ cv2.imread(p) for (_, p) in array_paths ]
+	return unmatched_images

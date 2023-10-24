@@ -31,6 +31,8 @@ class FolderSelectorLineWidget(QWidget):
 		layout.addWidget(self.folder_line_edit, 0, 0)
 		layout.addWidget(file_browser_btn, 0, 1)
 		layout.addWidget(file_browser_goto_btn, 0, 2)
+		
+		
 
 	def open_file_dialog(self):
 		dialog = QFileDialog(self)
@@ -97,3 +99,6 @@ class InOutFoldersSelectorWidget(QWidget):
 	def get_folders(self):
 		return (	self.in_folder_selector.get_folder(), 
 				    self.out_folder_selector.get_folder())
+	
+	def signal_in_folder_selected(self):
+		return self.in_folder_selector.folder_selector_line.folder_line_edit.textChanged

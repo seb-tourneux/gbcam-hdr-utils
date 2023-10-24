@@ -8,7 +8,7 @@ import os
 from datetime import datetime
 
 class WidgetCommon(QWidget):
-	def __init__(self, stage_name, button_callback, build_middle_widget=None):
+	def __init__(self, stage_name, button_callback, build_middle_widget=None, stretch = True):
 		super(WidgetCommon, self).__init__()
 
 		self.stage_name = stage_name
@@ -27,18 +27,20 @@ class WidgetCommon(QWidget):
 		#print(self.middle_widget)
 		self.main_layout.addWidget(self.middle_widget)
 
-		self.main_layout.addStretch()
+		if stretch:
+			self.main_layout.addStretch()
 
 		self.pbar = QProgressBar(self)
 		self.pbar.setValue(0)
 		self.pbar.setAlignment(Qt.AlignCenter);
 		self.main_layout.addWidget(self.pbar)
 
-		do_it_btn = QPushButton(stage_name)
-		do_it_btn.setMinimumHeight(50)
-		self.main_layout.addWidget(do_it_btn)
-		do_it_btn.clicked.connect(button_callback)
-		
+		if button_callback:
+			do_it_btn = QPushButton(stage_name)
+			do_it_btn.setMinimumHeight(50)
+			self.main_layout.addWidget(do_it_btn)
+			do_it_btn.clicked.connect(button_callback)
+			
 		self.output_console = OutputConsoleWidget()
 		self.main_layout.addWidget(self.output_console)
 
@@ -60,7 +62,7 @@ class WidgetCommon(QWidget):
 		completion_text = ""
 		if completion:
 			self.pbar.setValue(100*completion)
-			completion_text = "{:.2f}%".format(100*completion).rjust(7)
+			completion_text = "{:.2f}%".format(100*completion).rjust(8)
 			completion_text = "[{}]".format(completion_text)
 		
 		time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
