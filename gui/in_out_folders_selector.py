@@ -4,6 +4,36 @@ import os
 import platform
 import subprocess
 
+class DragableLineEdit(QLineEdit):
+	def __init__(self, is_file):
+		super(DragableLineEdit, self).__init__()
+		self.is_file = is_file
+		self.setAcceptDrops(True)
+		self.setToolTip("{} path. Can be drag n dropped from file explorer".format("File" if self.is_file else "Folder"))
+
+	def dragEnterEvent(self, event):
+		if event.mimeData().hasUrls:
+			event.accept()
+		else:
+			event.ignore()
+
+	def dragMoveEvent(self, event):
+		if event.mimeData().hasUrls:
+			event.accept()
+		else:
+			event.ignore()
+
+	def dropEvent(self, event):
+		if event.mimeData().hasUrls:
+			f = event.mimeData().urls()[0].toLocalFile()
+			if (not self.is_file and os.path.isdir(f)) or\
+				(self.is_file and os.path.isfile(f)):
+				event.accept()
+				self.setText(f)
+				return
+
+		event.ignore()
+
 class FolderSelectorLineWidget(QWidget):
 	def __init__(self, is_file = False):
 		super(FolderSelectorLineWidget, self).__init__()
@@ -26,13 +56,12 @@ class FolderSelectorLineWidget(QWidget):
 		file_browser_goto_btn.setStyleSheet("QPushButton { border: none; }")
 		file_browser_goto_btn.clicked.connect(self.open_explorer)
 
-		self.folder_line_edit = QLineEdit(self)
+		self.folder_line_edit = DragableLineEdit(is_file)
 
 		layout.addWidget(self.folder_line_edit, 0, 0)
 		layout.addWidget(file_browser_btn, 0, 1)
 		layout.addWidget(file_browser_goto_btn, 0, 2)
-		
-		
+
 
 	def open_file_dialog(self):
 		dialog = QFileDialog(self)
@@ -98,7 +127,7 @@ class InOutFoldersSelectorWidget(QWidget):
 		
 	def get_folders(self):
 		return (	self.in_folder_selector.get_folder(), 
-				    self.out_folder_selector.get_folder())
+					self.out_folder_selector.get_folder())
 	
 	def signal_in_folder_selected(self):
 		return self.in_folder_selector.folder_selector_line.folder_line_edit.textChanged
