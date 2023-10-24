@@ -9,17 +9,22 @@ class WidgetOrganize(WidgetCommon):
 
 	def build_middle_widget(self):
 		middle_widget = QGroupBox("Settings", self)
-		middle_layout = QHBoxLayout()
-		middle_layout.setAlignment(Qt.AlignTop)
+
+		middle_layout = QVBoxLayout()
 		middle_widget.setLayout(middle_layout)
+		middle_widget.setMaximumWidth(300)
+
+		threshold_layout = QHBoxLayout()
+		threshold_layout.setAlignment(Qt.AlignTop)
+		threshold_widget = QWidget(middle_widget)
+		threshold_widget.setLayout(threshold_layout)
 		label = QLabel("Threshold")
-		middle_widget.setToolTip("""Luminosity difference threshold
+		threshold_widget.setToolTip("""Luminosity difference threshold
 If two consecutives images have a luminosity difference above this threshold, then they'll be separated into different sets.
 
 Decrease if several sequences are incorrectly grouped into one set.
 Increase if a single sequence is incorrectly splitted into several sets.""")
-		middle_layout.addWidget(label)
-		middle_widget.setMaximumWidth(300)
+		threshold_layout.addWidget(label)
 
 		self.threshold_slider = QSlider(Qt.Horizontal)
 		self.threshold_slider.setMinimum(0)
@@ -33,10 +38,25 @@ Increase if a single sequence is incorrectly splitted into several sets.""")
 		self.threshol_val.setMinimumWidth(30)
 		self.threshol_val.setAlignment(Qt.AlignRight)
 		self.value_changed()
+
+		threshold_layout.addWidget(label)
+		threshold_layout.addWidget(self.threshold_slider)
+		threshold_layout.addWidget(self.threshol_val)
+
+		max_nb_layout = QHBoxLayout()
+		max_nb_layout.setAlignment(Qt.AlignTop)
+		max_nb_widget = QWidget(middle_widget)
+		max_nb_widget.setLayout(max_nb_layout)
 		
-		middle_layout.addWidget(label)
-		middle_layout.addWidget(self.threshold_slider)
-		middle_layout.addWidget(self.threshol_val)
+		self.spin_box_max_nb = QSpinBox(minimum=1, maximum=100000000, value = 29, suffix=' images')
+		max_nb_layout.addWidget(QLabel("Skip sets bigger than"))
+		max_nb_widget.setToolTip("""Skip sets that are strictly bigger than this value.
+It can be usefull to skip video sets mixed with AEB sets.""")
+		max_nb_layout.addWidget(self.spin_box_max_nb)
+		
+		middle_layout.addWidget(threshold_widget)
+		middle_layout.addWidget(max_nb_widget)
+		
 		return middle_widget
 	
 	@staticmethod
@@ -58,7 +78,8 @@ Increase if a single sequence is incorrectly splitted into several sets.""")
 		
 		(in_folder, out_folder) = self.folders_selector_widget.get_folders()
 		threshold = WidgetOrganize.slider_val_to_threshold(self.threshold_slider.value())
-		print("threshold {}".format(threshold))
-		organizer.separate_hdr_sets(in_folder, out_folder, threshold, self.update)
+		max_nb_per_set = self.spin_box_max_nb.value()
+
+		organizer.separate_hdr_sets(in_folder, out_folder, threshold, max_nb_per_set, self.update)
 		
 		self.job_done()
