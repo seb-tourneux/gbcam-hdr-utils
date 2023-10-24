@@ -44,6 +44,9 @@ class WidgetCommon(QWidget):
 		self.output_console = OutputConsoleWidget()
 		self.main_layout.addWidget(self.output_console)
 
+		self.folders_selector_widget.signal_in_folder_selected().connect(self.update_in_folder_selected)
+
+
 	def check_folders(self):
 		ok = True
 		self.output_console.clear()
@@ -60,13 +63,14 @@ class WidgetCommon(QWidget):
 	def update(self, text, completion = None):
 		
 		completion_text = ""
-		if completion:
+		if not completion is None:
 			self.pbar.setValue(100*completion)
 			completion_text = "{:.2f}%".format(100*completion).rjust(8)
 			completion_text = "[{}]".format(completion_text)
-		
-		time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
-		self.output_console.add_text("[{}][{}]{} {}".format(time, self.stage_name, completion_text, text))
+
+		if text:
+			time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+			self.output_console.add_text("[{}][{}]{} {}".format(time, self.stage_name, completion_text, text))
 
 	def job_start(self):
 		self.output_console.clear()
@@ -74,3 +78,7 @@ class WidgetCommon(QWidget):
 		
 	def job_done(self):
 		self.update("Done", 1.0)
+
+	def update_in_folder_selected(self):
+		self.output_console.clear()
+		self.update(None, 0.0)
