@@ -122,13 +122,31 @@ class WidgetStitch(WidgetCommon):
 			self.match_accept_button.setText("Accept →")
 			self.match_accept_button.setToolTip("Accept the proposed match\nShortcut: Right Arrow")
 
+	def launch_auto_stitch(self):
+		(in_folder, out_folder) = self.folders_selector_widget.get_folders()
+		ratio_threshold = self.match_ratio_slider.get_value()
+		align.auto_align(in_folder, out_folder, ratio_threshold, self.update)
+
+
 	def build_middle_widget(self):
-		images_widget = QWidget()
+
+		middle_widget = QWidget(self)
+		middle_layout = QVBoxLayout()
+		middle_widget.setLayout(middle_layout)
+
+		settings_widget = QGroupBox("Settings", self)
+		settings_layout = QHBoxLayout()
+		settings_widget.setMaximumWidth(300)
+		settings_widget.setLayout(settings_layout)
+		self.match_ratio_slider = SliderLabeled(self, 0.5)
+		self.match_ratio_slider.label.setText("Match threshold")
+		settings_layout.addWidget(self.match_ratio_slider)
+
+		images_widget = QWidget(middle_widget)
 		images_layout = QHBoxLayout()
 		images_widget.setLayout(images_layout)
 
-
-		match_widget = QGroupBox("Match", self)
+		match_widget = QGroupBox("Match", images_widget)
 		match_layout = QVBoxLayout()
 		match_widget.setLayout(match_layout)
 		match_widget.setSizePolicy(QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding))
@@ -167,7 +185,7 @@ class WidgetStitch(WidgetCommon):
 		match_layout.addWidget(self.match_buttons_widget)
 
 		# RESULT
-		result_widget = QGroupBox("Result", self)
+		result_widget = QGroupBox("Result", images_widget)
 		result_layout = QVBoxLayout()
 		result_widget.setLayout(result_layout)
 		self.result_img_label = QLabel("")
@@ -177,11 +195,15 @@ class WidgetStitch(WidgetCommon):
 
 		images_layout.addWidget(match_widget)
 		images_layout.addWidget(result_widget)
-		return images_widget
+
+		middle_layout.addWidget(settings_widget)
+		middle_layout.addWidget(images_widget)
+
+		return middle_widget
 
 
 	def __init__(self):
-		super(WidgetStitch, self).__init__("Stitch", None, self.build_middle_widget, False)
+		super(WidgetStitch, self).__init__("Auto-stitch", self.launch_auto_stitch, self.build_middle_widget, True)
 
 		self.folders_selector_widget.signal_in_folder_selected().connect(self.update_in_folder_selected)
 

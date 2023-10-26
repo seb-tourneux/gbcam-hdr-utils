@@ -38,11 +38,11 @@ def filter_matches(matches, kp1, kp2):
 
 	match_threshold = 0.5
 	epsilon_colinear = 2.0 # in pixels
-	for cur_i, cur_match in enumerate(matches):
+	for cur_i, cur_match  in enumerate(matches):
 		if match_ratio_fun(cur_match) < match_threshold:
 			for cluster_i in clusters.keys():
-				delta_cluster = compute_delta(matches[cluster_i], kp1, kp2)
-				delta_cur_match = compute_delta(cur_match, kp1, kp2)
+				delta_cluster = compute_delta(matches[cluster_i][0], kp1, kp2)
+				delta_cur_match = compute_delta(cur_match[0], kp1, kp2)
 				if np.linalg.norm(delta_cluster - delta_cur_match) < epsilon_colinear:
 					clusters[cluster_i].append(cur_match)
 					break
@@ -81,11 +81,10 @@ def find_delta(img1, img2):
 		to_print = list(map(lambda x : [x[0]], matches))
 		img3 = cv2.drawMatchesKnn(img1,kp1,img2,kp2,to_print,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 		
-		matches = list(map(lambda x : x[0], matches))
-		deltas = list(map(lambda x :compute_delta(x, kp1, kp2), matches))
+		ratios = list(map(lambda x :match_ratio_fun(x), matches))
+		match_ratio = np.array([*ratios]).mean()
+		deltas = list(map(lambda x :compute_delta(x[0], kp1, kp2), matches))
 		array_deltas = np.array([*deltas])
-		ratios = list(map(lambda x :match_ratio_fun(x))
-		match_ratio = ratios.mean()
 	
 		average_delta = array_deltas.mean(axis=0)
 		average_delta = average_delta.astype(int)
@@ -223,7 +222,7 @@ def load_folder_cv2(folder):
 	unmatched_images = [ cv2.imread(p) for (_, p) in array_paths ]
 	return unmatched_images
 
-def auto_align(in_folder, out_folder, ratio_threshold, update_callback)
+def auto_align(in_folder, out_folder, ratio_threshold, update_callback):
 
 	unmatched_images = load_folder_cv2(in_folder)
 	nb_total_images = len(unmatched_images)
