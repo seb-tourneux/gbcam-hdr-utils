@@ -40,7 +40,7 @@ class WidgetStitch(WidgetCommon):
 		
 	def try_match(self):
 		(self.res_try_match, self.res_merged_img) = align.process_one_match(self.unmatched_images, self.res_merged_img, self.accepted_images_delta, self.nb_fails)
-		(img_matches, img2, delta) = self.res_try_match
+		(img_matches, img2, delta, match_ratio) = self.res_try_match
 		if img_matches is None:
 			self.decline_match()
 		else:
