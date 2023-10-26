@@ -4,6 +4,7 @@ import processing.parser as parser
 import processing.organizer as organizer
 import processing.process_batch as process_batch
 import processing.making_of as making_of
+import processing.align as align
 
 
 args = parse_arguments()
@@ -19,6 +20,7 @@ elif args.action == "process":
 elif args.action == "making_of":
 	options = parse_making_of_options(args)
 	making_of.make_gif_all(args.input_folder, args.output_folder, options, print_cli)
-#elif args.action == "stitch":
+elif args.action == "stitch":
+	align.auto_align(args.input_folder, args.output_folder, args.match_ratio_threshold, print_cli)
 else:
 	print("\"{}\" not implemented yet".format(args.action))
