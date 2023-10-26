@@ -43,7 +43,7 @@ def add_subparser_process(subparsers):
 
 def add_subparser_stitch(subparsers):
 	parser_stitch = subparsers.add_parser('stitch', help='Stitch pictures together')
-	#add_in_out_folder_args(parser_stitch)
+	parser_process.add_argument("--match_ratio_threshold", help="Threshold of match quality", dest="match_ratio_threshold", default=0.5, type=float)
 
 def check_process_options(args, parser_process):
 	if args.action == "process":

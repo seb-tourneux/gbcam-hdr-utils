@@ -3,6 +3,7 @@ from cli.parse_arguments import *
 import processing.parser as parser
 import processing.organizer as organizer
 import processing.process_batch as process_batch
+import processing.align as align
 
 
 args = parse_arguments()
@@ -15,6 +16,7 @@ elif args.action == "organize":
 elif args.action == "process":
 	options = parse_process_options(args)
 	process_batch.process_batch(args.input_folder, args.output_folder, options, print_cli)
-#elif args.action == "stitch":
+elif args.action == "stitch":
+	align.auto_align(args.input_folder, args.output_folder, args.match_ratio_threshold, print_cli)
 else:
 	print("\"{}\" not implemented yet".format(args.action))

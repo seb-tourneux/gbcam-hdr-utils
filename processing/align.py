@@ -84,11 +84,13 @@ def find_delta(img1, img2):
 		matches = list(map(lambda x : x[0], matches))
 		deltas = list(map(lambda x :compute_delta(x, kp1, kp2), matches))
 		array_deltas = np.array([*deltas])
+		ratios = list(map(lambda x :match_ratio_fun(x))
+		match_ratio = ratios.mean()
 	
 		average_delta = array_deltas.mean(axis=0)
 		average_delta = average_delta.astype(int)
 		
-	return (img3, img2, average_delta)
+	return (img3, img2, average_delta, match_ratio)
 
 #	diff = array_deltas-average_delta
 #	print (array_deltas)
@@ -220,3 +222,33 @@ def load_folder_cv2(folder):
 		return None
 	unmatched_images = [ cv2.imread(p) for (_, p) in array_paths ]
 	return unmatched_images
+
+def auto_align(in_folder, out_folder, ratio_threshold, update_callback)
+
+	unmatched_images = load_folder_cv2(in_folder)
+	nb_total_images = len(unmatched_images)
+	update_callback("Loaded {} images to align".format(nb_total_images), 0.0)
+
+	nb_fails = [0]
+	res_merged_img = None
+	accepted_images_delta = []
+	while nb_fails[0] <= len(unmatched_images) or len(unmatched_images) == 0:
+
+		(res_try_match, res_merged_img) = process_one_match(unmatched_images, res_merged_img, accepted_images_delta, nb_fails)
+		(img_matches, img2, delta, match_ratio) = res_try_match
+
+		accepted = match_ratio < ratio_threshold
+		update_callback("Match quality {}, accepted {}".format(match_ratio, accepted), len(accepted_images_delta) / nb_total_images)
+		res_merged_img = process_match_accept_decline(	unmatched_images, 
+														res_merged_img, 
+														accepted_images_delta, 
+														nb_fails, 
+														res_try_match[1], #img matched
+														res_try_match[2], #delta
+														accepted)
+		if not accepted:
+			update_callback("Fail. Number of fails {}, number of unmatched_images {}".format(nb_fails[0], len(unmatched_images)), len(accepted_images_delta) / nb_total_images)
+
+	set_name = os.path.basename(in_folder)
+	save_layers(accepted_images_delta, unmatched_images, out_folder, set_name)
+	update_callback("Saved {} matched, {} unmatched.".format(len(accepted_images_delta), len(unmatched_images)), 1.0)
