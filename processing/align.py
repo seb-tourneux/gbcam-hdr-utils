@@ -11,9 +11,6 @@ output_dir = "E:/Data/Prods/2022/Photo/GameboyCamera/2023_09_03/test_align1_res"
 
 
 
-
-
-
 def match_ratio_fun(x):
 	return x[0].distance/x[1].distance
 
@@ -34,7 +31,27 @@ def compute_delta(m, kp1, kp2):
 
 def bounding_box(A):
 	return (np.min(A, axis=0), np.max(A, axis=0))
-	
+
+def filter_matches(matches, kp1, kp2):
+	# clusterize matches (based on deltas similarity), then keeping the biggest cluster
+	clusters = {}
+
+	match_threshold = 0.5
+	epsilon_colinear = 2.0 # in pixels
+	for cur_i, cur_match in enumerate(matches):
+		if match_ratio_fun(cur_match) < match_threshold:
+			for cluster_i in clusters.keys():
+				delta_cluster = compute_delta(matches[cluster_i], kp1, kp2)
+				delta_cur_match = compute_delta(cur_match, kp1, kp2)
+				if np.linalg.norm(delta_cluster - delta_cur_match) < epsilon_colinear:
+					clusters[cluster_i].append(cur_match)
+					break
+			else:
+				# no cluster was found for cur_match, create a new one
+				clusters[cur_i] = [cur_match]
+
+	biggest_cluster = max(clusters.values(), key=len)
+	return biggest_cluster
 
 def find_delta(img1, img2):
 	# Initiate SIFT detector
@@ -46,8 +63,7 @@ def find_delta(img1, img2):
 	bf = cv2.BFMatcher()
 	matches = bf.knnMatch(des1,des2,k=2)
 	
-	match_threshold = 0.7
-	max_nb_matches = 5
+	max_nb_matches = 10
 	
 	img3 = None
 	
@@ -55,7 +71,7 @@ def find_delta(img1, img2):
 	matches= matches[:max_nb_matches]
 	
 	# filter not good matches
-	matches = list(filter(lambda m : match_ratio_fun(m) < match_threshold, matches))
+	matches = filter_matches(matches, kp1, kp2)
 	#for m in matches:
 	#	print(match_ratio_fun(m))
 	
