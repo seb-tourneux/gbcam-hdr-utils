@@ -45,7 +45,7 @@ def add_subparser_process(subparsers):
 
 def add_subparser_stitch(subparsers):
 	parser_stitch = subparsers.add_parser('stitch', help='Stitch pictures together')
-	parser_process.add_argument("--match_ratio_threshold", help="Threshold of match quality", dest="match_ratio_threshold", default=0.5, type=float)
+	parser_stitch.add_argument("--match_ratio_threshold", help="Threshold of match quality", dest="match_ratio_threshold", default=0.5, type=float)
 
 def parse_rgb(value):
     try:
