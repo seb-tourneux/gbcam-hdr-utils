@@ -4,7 +4,7 @@ import processing.data as data
 import processing.files_utils as files_utils
 import matplotlib.pyplot as plt
 from PIL import Image
-
+import os
 
 input_dir = "E:/Data/Prods/2022/Photo/GameboyCamera/2023_09_03/align_poteau1"
 output_dir = "E:/Data/Prods/2022/Photo/GameboyCamera/2023_09_03/test_align1_res"
@@ -37,18 +37,28 @@ def filter_matches(matches, kp1, kp2):
 	clusters = {}
 
 	match_threshold = 0.5
-	epsilon_colinear = 2.0 # in pixels
+	epsilon_colinear = 3.0 # in pixels
 	for cur_i, cur_match  in enumerate(matches):
-		if match_ratio_fun(cur_match) < match_threshold:
+		#print("{} ratio {} ".format(cur_i, match_ratio_fun(cur_match)))
+		if True or (match_ratio_fun(cur_match) < match_threshold):
 			for cluster_i in clusters.keys():
 				delta_cluster = compute_delta(matches[cluster_i][0], kp1, kp2)
 				delta_cur_match = compute_delta(cur_match[0], kp1, kp2)
-				if np.linalg.norm(delta_cluster - delta_cur_match) < epsilon_colinear:
+				dist = np.linalg.norm(delta_cluster - delta_cur_match)
+# 				print("dist {} ".format(dist))
+				if dist < epsilon_colinear:
 					clusters[cluster_i].append(cur_match)
 					break
 			else:
 				# no cluster was found for cur_match, create a new one
 				clusters[cur_i] = [cur_match]
+		
+# 	print("nb values {} nb clusters {}".format(len(matches), len(clusters)))
+
+# 	for c in clusters.values():
+# 		print("cluster size {}".format(len(c)))
+# 		for m in c:
+# 			print("delta {}".format( compute_delta(m[0], kp1, kp2)))
 
 	biggest_cluster = max(clusters.values(), key=len)
 	return biggest_cluster
@@ -70,8 +80,13 @@ def find_delta(img1, img2):
 	matches = sorted(matches, key=match_ratio_fun) # sort best matches first
 	matches= matches[:max_nb_matches]
 	
+	#print("nb matchs knn {}".format(len(matches)))
+	
 	# filter not good matches
 	matches = filter_matches(matches, kp1, kp2)
+	
+	#print("nb matchs after filter {}".format(len(matches)))
+	
 	#for m in matches:
 	#	print(match_ratio_fun(m))
 	
@@ -83,13 +98,17 @@ def find_delta(img1, img2):
 		
 		ratios = list(map(lambda x :match_ratio_fun(x), matches))
 		match_ratio = np.array([*ratios]).mean()
+		#print("match ratio {}".format(match_ratio))
+		#print(" len(matches) {}".format(len(matches)))
 		deltas = list(map(lambda x :compute_delta(x[0], kp1, kp2), matches))
 		array_deltas = np.array([*deltas])
 	
 		average_delta = array_deltas.mean(axis=0)
 		average_delta = average_delta.astype(int)
 		
-	return (img3, img2, average_delta, match_ratio)
+	accepted = len(matches) >= 3
+	# maybe add match ratio check
+	return (img3, img2, average_delta, accepted)
 
 #	diff = array_deltas-average_delta
 #	print (array_deltas)
@@ -109,6 +128,8 @@ def align_images(img1, img2, delta, accepted_images_delta):
 	background_color = (255, 255, 255)  # Background color in BGR format (white in this case)
 	new_image = np.zeros(new_shape, dtype=np.uint8)
 	new_image[:, :] = background_color
+	
+	#todo fix
 	
 	# Calculate positions where you want to place the images
 	start_image1 = np.array([image2.shape[0], image2.shape[1]])
@@ -191,11 +212,19 @@ def save_layers(accepted_images_delta, unmatched_images, out_folder, set_name):
 	
 	deltas_global = list(list(zip(*accepted_images_delta))[1])
 	minBox, maxBox = bounding_box(deltas_global)
+	span = (maxBox[0]-minBox[0], maxBox[1]-minBox[1])
+	
+	print("minBox {} maxBox {} span {}".format(minBox, maxBox, span))
+	
+	coef = 3
 	
 	# todo correct
-	size_accepted = (maxBox[0]+img_size[1], maxBox[1]+img_size[0])
-	total_size = (size_accepted[0] + extra[1], size_accepted[1] + extra[0])
+	size_accepted = (span[0]+img_size[1], span[1]+img_size[0])
+	total_size = (coef*(size_accepted[0] + extra[1]), coef*(size_accepted[1] + extra[0]))
 	pos_unmatched = (size_accepted[0]+offset[1], size_accepted[1]+offset[0])
+	ref_pos = size_accepted
+	print("size_accepted {} total_size {}".format(size_accepted, total_size))
+
 	
 	# add match/umatched flag
 	res_images_delta = [(i,d,True) for (i,d) in accepted_images_delta]
@@ -207,8 +236,14 @@ def save_layers(accepted_images_delta, unmatched_images, out_folder, set_name):
 	for (i, (img, delta, matched)) in enumerate(res_images_delta):
 		cur_bg = background.copy()
 		pilImg = Image.fromarray(img)
-		cur_bg.paste(pilImg, (delta[0], delta[1]))
-		blended_all.paste(pilImg, (delta[0], delta[1]))
+		
+		pos = ref_pos + delta
+		
+		print("delta {} pos {}".format(delta, pos))
+
+
+		cur_bg.paste(pilImg, (pos[0], pos[1]))
+		blended_all.paste(pilImg, (pos[0], pos[1]))
 		cur_bg.save(out_folder + "/{}{}_{}.png".format(set_name, "" if matched else "_unmatched", i))
 	
 	suffix = "partial_stitch" if len(unmatched_images) > 0 else "stitch"
@@ -231,13 +266,12 @@ def auto_align(in_folder, out_folder, ratio_threshold, update_callback):
 	nb_fails = [0]
 	res_merged_img = None
 	accepted_images_delta = []
-	while nb_fails[0] <= len(unmatched_images) or len(unmatched_images) == 0:
+	while nb_fails[0] <= len(unmatched_images) and len(unmatched_images) != 0:
 
 		(res_try_match, res_merged_img) = process_one_match(unmatched_images, res_merged_img, accepted_images_delta, nb_fails)
-		(img_matches, img2, delta, match_ratio) = res_try_match
+		(img_matches, img2, delta, accepted) = res_try_match
 
-		accepted = match_ratio < ratio_threshold
-		update_callback("Match quality {}, accepted {}".format(match_ratio, accepted), len(accepted_images_delta) / nb_total_images)
+		update_callback("Nb matches {}, accepted {}".format(len(img_matches), accepted), len(accepted_images_delta) / nb_total_images)
 		res_merged_img = process_match_accept_decline(	unmatched_images, 
 														res_merged_img, 
 														accepted_images_delta, 
