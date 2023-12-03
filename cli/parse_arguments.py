@@ -37,6 +37,7 @@ def add_subparser_process(subparsers):
 	parser_process.add_argument("--gif_frame_duration", help="Duration of 1 frame of the gif generated (ms)", dest="gif_frame_duration", default=100, type=int)
 	parser_process.add_argument("--scale", help="Scaling factor", dest="scale_factor", default=1, type=int)
 	parser_process.add_argument("--border_path", help="Path to a 160x144 border image", dest="border_path", default=None)
+	parser_process.add_argument("--palette", help="String with 4 hexa string: ex \"#01162c #0460bf #7cbde8 #fff7e1\"", dest="palette", default=None)
 
 	#add_in_out_folder_args(parser_process)
 	return parser_process
@@ -48,7 +49,9 @@ def add_subparser_stitch(subparsers):
 def check_process_options(args, parser_process):
 	if args.action == "process":
 		args_dict = vars(args)
-		if not any(args_dict[process_act] for (process_act, _) in processing_actions):
+		standard_processing = any(args_dict[process_act] for (process_act, _) in processing_actions))
+		palette_processing = args["palette"] != None
+		if not(standard_processing or palette_processing):
 			options_str = [ "--{}".format(process_act) for (process_act, _) in processing_actions]
 			parser_process.error('At least one processing action is required amongst: {}'.format(options_str))
 
@@ -91,6 +94,7 @@ def parse_process_options(args):
 			'blend_average' : args.average,
 			'gif_frame_duration' : args.gif_frame_duration, #todo
 			'scale_factor' : args.scale_factor,
-			'border_path' : args.border_path
+			'border_path' : args.border_path,
+			'color_palette' : args.palette
 		 }
 	return options

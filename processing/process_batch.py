@@ -17,7 +17,16 @@ def process_batch(input_dir, output_dir, options, update_callback):
 
 		if options["blend_average"]:
 			res = process.average(arrays)
-			data.finalizeAndSave(res, options["scale_factor"], output_dir, d, "average")
+			data.finalizeAndSave(res, options["scale_factor"], None, output_dir, d, "average")
+		else:
+			# save single pictures (maybe make an option)
+			n_single = len(array_paths)
+			for i_single, (arr, path) in enumerate(array_paths):
+				suffix = os.path.basename(path)
+				data.finalizeAndSave(arr, options["scale_factor"], options["color_palette"], output_dir, d, suffix)
+				update_callback( "=== Saving single image {}".format(suffix), i_single / n_single )
+
+
 
 		if options["gif_ascend"]:
 			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], "gif_ascend", border_path)
@@ -27,3 +36,5 @@ def process_batch(input_dir, output_dir, options, update_callback):
 			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], "gif_depth", border_path)
 		if options["gif_depth_reverse"]:
 			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], "gif_depth_reverse", border_path)
+			
+		

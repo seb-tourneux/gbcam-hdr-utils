@@ -1,5 +1,6 @@
 from processing.files_utils import *
 from PIL import Image as PILImage
+from PIL import ImageColor as PILImageColor
 import numpy
 from PIL.ImageQt import ImageQt
 import os
@@ -20,6 +21,8 @@ def paste_in_frame(picture_img, border_img):
 		res.paste(picture_img, (16, 16))
 		return res
 	return img
+
+	
 
 def PIL_to_array(img, border_img = None):
 	img = img.convert('L')
@@ -72,11 +75,43 @@ def resize_PIL(img_pil, scale_factor):
 		return img_pil
 
 
-def finalizeAndSave(arr, scale_factor, output_dir, aFolder, aSuffix):
-	arr=numpy.array(numpy.round(255.0*arr),dtype=numpy.uint8)
-	out=PILImage.fromarray(arr,mode="L")
-	out = resize_PIL(out, scale_factor)
+def apply_palette(pixel, palette):
+	try:
+		avg = (sum(pixel) / len(pixel)) / 255.0
+	except TypeError:
+		avg = pixel / 255.0
 
+	if avg < 0.2:
+		return palette[0]
+	elif avg < 0.6:
+		return palette[1]
+	elif avg < 0.8:
+		return palette[2]
+	else:
+		return palette[3]
+	
+
+def PIL_apply_palette(img, str_palette):
+	pixels = img.load() # create the pixel map
+	col_palette = [PILImageColor.getrgb(s) for s in str_palette.split()]
+	for i in range(img.size[0]): # for every pixel:
+		for j in range(img.size[1]):
+			new_pixel = apply_palette(pixels[i,j], col_palette)
+			img.putpixel((i, j), new_pixel)
+	return img
+
+def finalizeAndSave(arr, scale_factor, color_palette, output_dir, aFolder, aSuffix):
+	arr=numpy.array(numpy.round(255.0*arr),dtype=numpy.uint8)
+
+	out=PILImage.fromarray(arr,mode="L")
+
+	if color_palette:
+		# not sure if mode is input or output
+		out=out.convert("RGB")
+		out=PIL_apply_palette(out, color_palette)
+
+		
+	out = resize_PIL(out, scale_factor)
 	lastDir = os.path.basename(os.path.normpath(aFolder))
 	imgOutput = output_dir + "/" + lastDir + "_" + aSuffix + ".png"
 	out.save(imgOutput)

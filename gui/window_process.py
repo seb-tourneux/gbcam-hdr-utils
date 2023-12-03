@@ -1,5 +1,5 @@
 from .window_common import *
-from PySide6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QCheckBox, QWidget, QSpinBox, QGroupBox
+from PySide6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QCheckBox, QWidget, QSpinBox, QGroupBox, QLineEdit
 from .in_out_folders_selector import *
 import processing.process_batch as process_batch
 
@@ -66,9 +66,21 @@ class WidgetProcess(WidgetCommon):
 		self.border_file_selector = FolderSelectorLineWidget(True)
 		add_border_layout.addWidget(self.border_file_selector)
 		self.checkbox_add_border.setLayout(add_border_layout)
+		
+		# PALETTE
+		self.palette_group_widget = QGroupBox("Apply palette", self)
+		self.palette_group_widget.setCheckable(True)
+		self.palette_group_widget.setChecked(False)
+		palette_group_layout = QVBoxLayout()
+		palette_group_layout.setAlignment(Qt.AlignTop)
+		self.palette_group_widget.setLayout(palette_group_layout)
+		self.palette_text = QLineEdit()
+		self.palette_text.setPlaceholderText("#000000 #555555 #aaaaaa #ffffff")
+		palette_group_layout.addWidget(self.palette_text)
 
 		post_layout.addWidget(self.checkbox_add_border)
 		post_layout.addWidget(self.scale_factor_widget)
+		post_layout.addWidget(self.palette_group_widget)
 
 		return post_widget
 
@@ -96,6 +108,13 @@ class WidgetProcess(WidgetCommon):
 			options['blend_average'],
 			options['border_path'] != None,
 			options['scale_factor'] != 1])
+	
+	def get_color_palette(self):
+		if self.palette_group_widget.isChecked():
+			#return ("#01162c", "#0460bf", "#7cbde8", "#fff7e1")
+			return self.palette_text.text()
+		else:
+			return None
 
 	def do_it(self):
 		self.job_start()
@@ -112,11 +131,13 @@ class WidgetProcess(WidgetCommon):
 				'blend_average' : self.checkbox_blend_average.isChecked(),
 				'gif_frame_duration' : self.spin_box_frame_duration.value(),
 				'scale_factor' : scale_factor,
-				'border_path' : border_path
+				'border_path' : border_path,
+				'color_palette' : self.get_color_palette()
 			 }
 
-		if not WidgetProcess.has_work_to_do(options):
-			self.add_text("Nothing to do")
+		# todo : check palette
+		#if not WidgetProcess.has_work_to_do(options):
+		#	self.add_text("Nothing to do")
 
 		(in_folder, out_folder) = self.folders_selector_widget.get_folders()
 		process_batch.process_batch(in_folder, out_folder, options, self.update)
