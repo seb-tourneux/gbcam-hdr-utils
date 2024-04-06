@@ -59,17 +59,30 @@ def append_current_set(sets_paths, current_set, max_nb_per_set, mode, completion
 def stop_distance(cur_mean, ref_mean, threshold):
 	return abs(cur_mean - ref_mean) > threshold
 
+def separate_hdr_sets(input_dir, output_dir, threshold, max_nb_per_set, mode, update_callback = None):
+	sub_dirs = files_utils.get_sub_directories(input_dir)
+	if not sub_dirs:
+		separate_hdr_sets_dir(input_dir, output_dir, threshold, max_nb_per_set, mode, update_callback)
+	else:
+		# recursive call
+		for sub_dir in sub_dirs:
+			base = os.path.basename(sub_dir)
+			new_output_dir = os.path.join(output_dir, base)
+			separate_hdr_sets(sub_dir, new_output_dir, threshold, max_nb_per_set, mode, update_callback)
+
+
+
 # Separate images into several sets.
 # As HDR images gradually increases (or decreases) exposure
 # we can detect big differences of luminosity in sequences of images.
 # Most of the time it should detect (almost full black -> almost full white) or (almost full white -> almost full black)
-def separate_hdr_sets(input_dir, output_dir, threshold, max_nb_per_set, mode, update_callback = None):
-	print("Processing {}".format(input_dir))
+def separate_hdr_sets_dir(input_dir, output_dir, threshold, max_nb_per_set, mode, update_callback = None):
+	update_callback("Organizing {} into {}".format(input_dir, output_dir))
 
 
 	files = files_utils.get_image_files(input_dir)
 	n = len(files)
-	update_callback("Found {} files".format(n))
+	update_callback("Found {} images ".format(n))
 	
 	arrays_paths = data.get_arrays_and_path_from_file_list(files)
 	

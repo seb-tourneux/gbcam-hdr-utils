@@ -50,7 +50,7 @@ Increase if a single sequence is incorrectly splitted into several sets.""")
 		
 		self.combo_split_mode = QComboBox()
 		self.combo_split_mode.addItems(organizer.Mode._member_names_)
-		
+
 		max_nb_layout.addWidget(self.combo_split_mode)
 		self.spin_box_max_nb = QSpinBox(minimum=1, maximum=100000000, value = 29, suffix=' images')
 		max_nb_layout.addWidget(QLabel(" sets bigger than"))
@@ -77,6 +77,13 @@ Keep: keep the big set as is.""")
 	def __init__(self):
 		super(WidgetOrganize, self).__init__("Organize", self.do_it, self.build_middle_widget)
 
+	def do_it_org(self, in_folder, out_folder):
+		threshold = WidgetOrganize.slider_val_to_threshold(self.threshold_slider.value())
+		max_nb_per_set = self.spin_box_max_nb.value()
+		mode = organizer.Mode(self.combo_split_mode.currentIndex()+1)
+
+		organizer.separate_hdr_sets(in_folder, out_folder, threshold, max_nb_per_set, mode, self.update)
+
 	def do_it(self):
 		self.job_start()
 
@@ -84,10 +91,6 @@ Keep: keep the big set as is.""")
 			return
 		
 		(in_folder, out_folder) = self.folders_selector_widget.get_folders()
-		threshold = WidgetOrganize.slider_val_to_threshold(self.threshold_slider.value())
-		max_nb_per_set = self.spin_box_max_nb.value()
-		mode = organizer.Mode(self.combo_split_mode.currentIndex()+1)
-
-		organizer.separate_hdr_sets(in_folder, out_folder, threshold, max_nb_per_set, mode, self.update)
+		self.do_it_org(in_folder, out_folder)
 		
 		self.job_done()

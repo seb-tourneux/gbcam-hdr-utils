@@ -43,3 +43,12 @@ def get_sub_directories(input_dir):
 
 	res = natsort.natsorted(res)
 	return res
+
+def get_all_subdirectories(root_directory):
+	subdirectories = []
+	for item in os.listdir(root_directory):
+		item_path = os.path.join(root_directory, item)
+		if os.path.isdir(item_path):
+			subdirectories.append(item_path)
+			subdirectories.extend(get_all_subdirectories(item_path))
+	return subdirectories

@@ -3,10 +3,25 @@ import processing.data as data
 import processing.process as process
 import os
 
-def process_batch(input_dir, output_dir, options, update_callback):
-	sub_dir = files_utils.get_sub_directories(input_dir)
-	if not sub_dir:
-		sub_dir = [input_dir]
+def process_batch(input_dir, output_dir, options, prefix = "", update_callback = None):
+	sub_dirs = files_utils.get_all_subdirectories(input_dir)
+
+	for sub_dir in sub_dirs:
+		relative_path = sub_dir.replace(input_dir, "")
+
+		relative_path = relative_path.replace("/", "_")
+		new_prefix = relative_path.replace("\\", "_")
+		if new_prefix[0] == "_":
+			new_prefix = new_prefix[1:]
+
+		process_batch_dir(sub_dir, output_dir, options, new_prefix, update_callback)
+
+
+
+def process_batch_dir(input_dir, output_dir, options, prefix, update_callback):
+	#sub_dir = files_utils.get_sub_directories(input_dir)
+	#if not sub_dir:
+	sub_dir = [input_dir]
 
 	border_path = options["border_path"]
 	n = len(sub_dir)
@@ -17,13 +32,13 @@ def process_batch(input_dir, output_dir, options, update_callback):
 
 		if options["blend_average"]:
 			res = process.average(arrays)
-			data.finalizeAndSave(res, options["scale_factor"], None, output_dir, d, "average")
+			data.finalizeAndSave(res, options["scale_factor"], None, output_dir, prefix, "average")
 		else:
 			# save single pictures (maybe make an option)
 			n_single = len(array_paths)
 			for i_single, (arr, path) in enumerate(array_paths):
 				suffix = os.path.basename(path)
-				data.finalizeAndSave(arr, options["scale_factor"], options["color_palette"], output_dir, d, suffix)
+				data.finalizeAndSave(arr, options["scale_factor"], options["color_palette"], output_dir, prefix, suffix)
 				update_callback( "=== Saving single image {}".format(suffix), i_single / n_single )
 
 

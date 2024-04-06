@@ -116,12 +116,8 @@ class WidgetProcess(WidgetCommon):
 		else:
 			return None
 
-	def do_it(self):
-		self.job_start()
-
-		if not self.check_folders():
-			return
-
+	def do_it_proc(self, in_folder, out_folder):
+		
 		scale_factor = self.spin_box_scale_factor.value() if self.scale_factor_widget.isChecked() else 1
 		border_path = self.border_file_selector.get_folder() if self.checkbox_add_border.isChecked() else None # todo get file
 		options = {'gif_ascend' : self.checkbox_gif_first_to_last.isChecked(),
@@ -139,7 +135,15 @@ class WidgetProcess(WidgetCommon):
 		#if not WidgetProcess.has_work_to_do(options):
 		#	self.add_text("Nothing to do")
 
+		process_batch.process_batch(in_folder, out_folder, options, "", self.update)
+
+	def do_it(self):
+		self.job_start()
+
+		if not self.check_folders():
+			return
+
 		(in_folder, out_folder) = self.folders_selector_widget.get_folders()
-		process_batch.process_batch(in_folder, out_folder, options, self.update)
+		self.do_it_proc(in_folder, out_folder)
 
 		self.job_done()
