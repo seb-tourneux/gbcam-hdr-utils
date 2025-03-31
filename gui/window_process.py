@@ -75,7 +75,7 @@ class WidgetProcess(WidgetCommon):
 		palette_group_layout.setAlignment(Qt.AlignTop)
 		self.palette_group_widget.setLayout(palette_group_layout)
 		self.palette_text = QLineEdit()
-		self.palette_text.setPlaceholderText("#000000 #555555 #aaaaaa #ffffff")
+		self.palette_text.setText("#000000 #555555 #aaaaaa #ffffff")
 		palette_group_layout.addWidget(self.palette_text)
 
 		post_layout.addWidget(self.checkbox_add_border)

@@ -51,4 +51,4 @@ def get_all_subdirectories(root_directory):
 		if os.path.isdir(item_path):
 			subdirectories.append(item_path)
 			subdirectories.extend(get_all_subdirectories(item_path))
-	return subdirectories
+	return sorted(subdirectories)

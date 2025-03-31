@@ -1,5 +1,7 @@
 data/frame_original.png
 output/
+input/
+gb-cam_venv/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

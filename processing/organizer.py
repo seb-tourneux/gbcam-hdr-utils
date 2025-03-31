@@ -27,7 +27,7 @@ def copy_set_paths(sets_paths, output_dir):
 		if len(set_paths) == 0:
 			continue
 		
-		new_dir = output_dir + "/" + "set_{}".format(i)
+		new_dir = output_dir + f"/set_{i:04}"
 		os.makedirs(new_dir)
 		i+=1
 		for path in set_paths:

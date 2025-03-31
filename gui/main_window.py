@@ -5,6 +5,7 @@ from .window_convert import *
 from .window_organize import *
 from .window_process import *
 from .window_organize_process import *
+from .window_making_of import *
 from .window_stitch import *
 import processing.infos as infos
 
@@ -24,6 +25,7 @@ class MainWindow(QMainWindow):
 		tabwidget.addTab(WidgetOrganize(), "Organize")
 		tabwidget.addTab(WidgetProcess(), "Process")
 		tabwidget.addTab(WidgetOrganizeProcess(), "Organize+Process")
+		tabwidget.addTab(WidgetMakingOf(), "Making-Of")
 		tabwidget.addTab(WidgetStitch(), "Stitch")
 		
 		tabwidget.setTabToolTip(0, "Convert .sav files to .png")

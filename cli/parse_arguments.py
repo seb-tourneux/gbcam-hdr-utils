@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from datetime import datetime
 import processing.organizer as organizer
+import argparse
 
 processing_actions=[
 ("average","Blend all images by averaging them"),
@@ -46,10 +47,25 @@ def add_subparser_stitch(subparsers):
 	parser_stitch = subparsers.add_parser('stitch', help='Stitch pictures together')
 	#add_in_out_folder_args(parser_stitch)
 
+def parse_rgb(value):
+    try:
+        r, g, b = map(int, value.split(","))
+        if not all(0 <= x <= 255 for x in (r, g, b)):
+            raise ValueError
+        return (r, g, b)
+    except ValueError:
+        raise argparse.ArgumentTypeError("RGB must be three integers (0-255) separated by commas, e.g., '255,255,255'.")
+
+def add_subparser_making_of(subparsers):
+	parser_making_of = subparsers.add_parser('making_of', help='Create making-of gifs')
+	parser_making_of.add_argument('--frame_duration', dest="frame_duration", help="in ms", default=50, type=int)
+	parser_making_of.add_argument('--freeze_duration', dest="freeze_duration", help="in ms", default=3000, type=int)
+	parser_making_of.add_argument("--bg_color", dest="bg_color", type=parse_rgb, default=(255, 255, 255), help="Background color as R,G,B (e.g., 255,255,255)")
+
 def check_process_options(args, parser_process):
 	if args.action == "process":
 		args_dict = vars(args)
-		standard_processing = any(args_dict[process_act] for (process_act, _) in processing_actions))
+		standard_processing = any(args_dict[process_act] for (process_act, _) in processing_actions)
 		palette_processing = args["palette"] != None
 		if not(standard_processing or palette_processing):
 			options_str = [ "--{}".format(process_act) for (process_act, _) in processing_actions]
@@ -66,6 +82,7 @@ def parse_arguments():
 	add_subparser_organize(subparsers)
 	parser_process = add_subparser_process(subparsers)
 	add_subparser_stitch(subparsers)
+	add_subparser_making_of(subparsers)
 
 	add_in_out_folder_args(parser)
 
@@ -96,5 +113,12 @@ def parse_process_options(args):
 			'scale_factor' : args.scale_factor,
 			'border_path' : args.border_path,
 			'color_palette' : args.palette
+		 }
+	return options
+
+def parse_making_of_options(args):
+	options = {'frame_duration' : args.frame_duration,
+		    'freeze_duration' : args.freeze_duration,
+			'bg_color' : args.bg_color
 		 }
 	return options

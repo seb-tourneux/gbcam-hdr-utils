@@ -27,6 +27,9 @@ def process_batch_dir(input_dir, output_dir, options, prefix, update_callback):
 	n = len(sub_dir)
 	for i, d in enumerate(sub_dir):
 		array_paths = data.get_arrays_and_path_from_folder(d, border_path)
+		if len(array_paths) == 0:
+			continue
+			
 		arrays = list(zip(*array_paths))[0]
 		update_callback( "Processing {} images in folder \"{}\"".format(len(arrays), os.path.basename(d)), i / n )
 
