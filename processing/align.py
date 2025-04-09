@@ -5,9 +5,8 @@ import processing.files_utils as files_utils
 import matplotlib.pyplot as plt
 from PIL import Image
 import os
+from pathlib import Path
 
-input_dir = "E:/Data/Prods/2022/Photo/GameboyCamera/2023_09_03/align_poteau1"
-output_dir = "E:/Data/Prods/2022/Photo/GameboyCamera/2023_09_03/test_align1_res"
 
 
 
@@ -256,6 +255,13 @@ def load_folder_cv2(folder):
 		return None
 	unmatched_images = [ cv2.imread(p) for (_, p) in array_paths ]
 	return unmatched_images
+
+def load_img_and_paths_cv2(folder):
+	array_paths = data.get_arrays_and_path_from_folder(folder)
+	if not array_paths:
+		return None
+	return [ (cv2.imread(p), Path(p)) for (_, p) in array_paths ]
+
 
 def auto_align(in_folder, out_folder, ratio_threshold, update_callback):
 
