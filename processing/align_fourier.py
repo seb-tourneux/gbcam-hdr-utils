@@ -10,6 +10,18 @@ from pathlib import Path
 from dataclasses import dataclass
 import numpy.typing as npt
 
+
+debug_level = 1
+def debug_fine(f):
+    global debug_level
+    if debug_level >= 2:
+        f()
+
+def debug(f):
+    global debug_level
+    if debug_level >= 1:
+        f()
+
 @dataclass
 class ImageData:
     img_idx : int
@@ -148,13 +160,17 @@ def preview_shift(data1, data2, shift):
 
     return result, result_only_first
     
-def show_corr(data1, data2, correlation_magnitude, shift, correlation_value):
+def show_corr(data1, data2, correlation_magnitude, shift, correlation_value, title = None):
     
     fig, axes = plt.subplot_mosaic(
         [["img0", "img1", "res", "res"],
         ["corr", "corr", "res", "res"],
         ["corr", "corr", "res", "res"]]
     )
+    
+    if title is not None:
+        fig.suptitle(title)
+    
     for i, data in enumerate([data1, data2]):
         axes[f"img{i}"].imshow(data.img, cmap='gray')
         axes[f"img{i}"].set_axis_off()
@@ -183,13 +199,72 @@ def show_corr(data1, data2, correlation_magnitude, shift, correlation_value):
 
     plt.show(block=True)
 
+def blur_array(array, kernel_size):
+    return cv2.GaussianBlur(array, kernel_size, 0)
+
+def compute_overlapping_difference(array1, array2, offset):
+    h1, w1 = array1.shape
+    h2, w2 = array2.shape
+    
+    y_offset, x_offset= offset
+
+    y1_start = max(0, -y_offset)
+    y1_end = min(h1, h2 - y_offset)
+    x1_start = max(0, -x_offset)
+    x1_end = min(w1, w2 - x_offset)
+    
+    y2_start = max(0, y_offset)
+    y2_end = min(h2, h1 + y_offset)
+    x2_start = max(0, x_offset)
+    x2_end = min(w2, w1 + x_offset)
+    overlap1 = array2[y1_start:y1_end, x1_start:x1_end]
+    overlap2 = array1[y2_start:y2_end, x2_start:x2_end]
+    if overlap1.size == 0 or overlap1.shape != overlap2.shape:
+        return None, 0
+    #overlap1 = overlap1.astype(np.int32)
+    #overlap2 = overlap2.astype(np.int32)
+
+    cps = compute_cps(np.fft.fft2(pad_to_square(overlap1)), np.fft.fft2(pad_to_square(overlap2)))
+    correlation = np.fft.ifft2(np.fft.ifftshift(cps))
+    correlation = np.fft.fftshift(correlation)
+    correlation_magnitude = np.abs(correlation)
+    correlation_magnitude = blur_array(correlation_magnitude, (3,3))
+    center_correl = correlation_magnitude[correlation_magnitude.shape[0]//2, correlation_magnitude.shape[1]//2]
+    return 1.0/(1.0 + center_correl), overlap1.size
+
+
 def compute_shift_cps(data1 : ImageData, data2 : ImageData):
     cps = compute_cps(data1.fft, data2.fft)
     #display_cps(cps)
     
     (peak_coords, peak_val, correlation_magnitude) = find_peak_location(cps)
     shift = compute_shift(peak_coords, data1.fft.shape)
-    #show_corr(data1, data2, correlation_magnitude, shift, peak_val, f"Correlation_magnitude {data1.path.stem} <> {data2.path.stem}")
+
+    candidates = []
+    min_size_to_keep = min(data1.img.shape[0], data1.img.shape[1]) * 3 # at least 3 row/col of overlap
+    # shift might be offset by a whole period as FFT phase correlation wraps around
+    for x in range(-1, 2):
+        for y in range(-1, 2):
+            offset = (shift[0] + x*data1.fft.shape[1], shift[1] + y*data1.fft.shape[0])
+            diff, size = compute_overlapping_difference(data1.img[:,:,0], data2.img[:,:,0], offset)
+            if diff is None:
+                continue
+            if size > min_size_to_keep: # keep 
+                candidates.append((offset, diff, size))
+        
+            # biggest size first, keep only top 5 (might be close if offset is size/2)
+            candidates.sort(key=lambda x: x[2], reverse=True)
+            candidates = candidates[:5]
+
+    if debug_level >= 2:
+        for i, c in enumerate(candidates):
+            show_corr(data1, data2, correlation_magnitude, c[0], peak_val, f"Candidate {i+1}/{len(candidates)} offset{c[0]} diff {c[1]}")
+    min_element = min(candidates, key=lambda x: abs(x[1]))
+    shift = min_element[0]
+    diff = min_element[1]
+
+    debug_fine(lambda: show_corr(data1, data2, correlation_magnitude, shift, 0, f"Best shift: {shift=} {diff=}"))
+
     return shift, peak_val, correlation_magnitude
 
 def compute_correlation(data1 : ImageData, data2: ImageData):
@@ -219,7 +294,7 @@ def auto_align(in_folder, out_folder, threshold, update_callback):
 
         best_corr = max(correlation_datas, key=lambda data: data.correlation)
 
-        show_corr(datas[best_corr.parent_idx], datas[best_corr.child_idx], best_corr.correlation_magnitude, best_corr.shift, best_corr.correlation)
+        debug(lambda: show_corr(datas[best_corr.parent_idx], datas[best_corr.child_idx], best_corr.correlation_magnitude, best_corr.shift, best_corr.correlation, "Accepted") )
 
         # TODO threshold, limited number of tries
         
@@ -231,3 +306,4 @@ def auto_align(in_folder, out_folder, threshold, update_callback):
     update_callback(f"Managed to stitch {len(placeds)}/{len(datas)} images")
     
     # TODO output results
+
