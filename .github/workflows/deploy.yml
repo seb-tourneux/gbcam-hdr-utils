@@ -1,18 +1,18 @@
 
-name: Package Application
+name: Package and Release
 
 on:
   push:
-    paths:
-    - 'version.txt'
-    - '.github/workflows/**'
+    branches:
+      - main
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
-  build:
+  package:
     env:
       GITHUB_CONTEXT: ${{ toJson(github) }}
-      
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -20,18 +20,70 @@ jobs:
         os: ['windows-latest', 'ubuntu-latest', 'macos-latest']
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.12
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
 
-    - run: echo "$GITHUB_CONTEXT"
-    - run: pip install -r requirements.txt pyinstaller
-    #- run: pyinstaller --onefile gbcam_hdr_utils_gui.py
-    - run: pyinstaller gbcam_hdr_utils_gui.py
-    - run: ls dist/
-    
-    - uses: actions/upload-artifact@v4
-      with:
-        name: "gbcam-hdr-utils-${{ github.sha }}-${{ matrix.os }}"
-        path: "dist/*"
+      - run: echo "$GITHUB_CONTEXT"
+
+      - name: "Run slugify"
+        id: slugify
+        uses: eltimn/slugify-action@v2.0.2
+
+      - uses: frabert/replace-string-action@v2
+        id: artifact_name
+        with:
+          pattern: '-latest'
+          string: ${{ github.event.repository.name }}-${{ github.ref_name }}-${{ steps.slugify.outputs.sha }}-${{ matrix.os }}
+          replace-with: ''
+
+
+      - run: pip install -r requirements.txt pyinstaller
+      #- run: pyinstaller --onefile gbcam_hdr_utils_gui.py
+      - run: pyinstaller gbcam_hdr_utils_gui.py
+      - run: ls dist/
+
+      - name: Zip artifacts (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p artifacts
+          zip -r artifacts/${{ steps.artifact_name.outputs.replaced }}.zip dist/
+        shell: bash
+
+      - name: Zip artifacts (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          New-Item -ItemType Directory -Path artifacts -Force
+          Compress-Archive -Path dist\* -DestinationPath artifacts\${{ steps.artifact_name.outputs.replaced }}.zip
+        shell: pwsh
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact_name.outputs.replaced }}
+          path: artifacts/${{ steps.artifact_name.outputs.replaced }}.zip
+
+  release:
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download packaged artifact
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "gbcam-hdr-utils-*"
+          merge-multiple: true
+          path: ./release-content/
+
+      - name: "Create Github Release"
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: "Release ${{ github.ref_name }}"
+          body_path: ./CHANGELOG.md
+          files: ./release-content/gbcam-hdr-utils-*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

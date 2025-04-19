@@ -1,0 +1,2 @@
+- test changelog
+- test release auto
