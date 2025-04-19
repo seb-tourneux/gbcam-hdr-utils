@@ -116,8 +116,7 @@ class WidgetProcess(WidgetCommon):
 		else:
 			return None
 
-	def do_it_proc(self, in_folder, out_folder):
-		
+	def get_options(self):
 		scale_factor = self.spin_box_scale_factor.value() if self.scale_factor_widget.isChecked() else 1
 		border_path = self.border_file_selector.get_folder() if self.checkbox_add_border.isChecked() else None # todo get file
 		options = {'gif_ascend' : self.checkbox_gif_first_to_last.isChecked(),
@@ -129,7 +128,11 @@ class WidgetProcess(WidgetCommon):
 				'scale_factor' : scale_factor,
 				'border_path' : border_path,
 				'color_palette' : self.get_color_palette()
-			 }
+				}
+		return options
+
+	def do_it_proc(self, in_folder, out_folder):
+		options = self.get_options()
 
 		# todo : check palette
 		#if not WidgetProcess.has_work_to_do(options):

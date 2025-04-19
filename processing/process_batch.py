@@ -3,7 +3,21 @@ import processing.data as data
 import processing.process as process
 import os
 
-def process_batch(input_dir, output_dir, options, prefix = "", update_callback = None):
+def default_options():
+    return {
+        "blend_average": True,
+        "scale_factor": 1,
+        "border_path": None,
+        "palette": None,
+        "gif_frame_duration": 100,
+        "gif_ascend": False,
+        "gif_descend": False,
+        "gif_depth": False,
+        "gif_depth_reverse": False
+    }
+
+
+def process_batch(input_dir, output_dir, options, update_callback = None):
 	sub_dirs = files_utils.get_all_subdirectories(input_dir)
 
 	for sub_dir in sub_dirs:
@@ -17,6 +31,11 @@ def process_batch(input_dir, output_dir, options, prefix = "", update_callback =
 		process_batch_dir(sub_dir, output_dir, options, new_prefix, update_callback)
 
 
+def make_gif_from_type(gif_type, input_dir, output_dir, options, prefix, border_path, update_callback):
+    if options[gif_type]:
+        output_dir_type = os.path.join(output_dir, gif_type)
+        os.makedirs(output_dir_type, exist_ok=True)
+        data.make_gif(input_dir, output_dir_type, options["scale_factor"], options["gif_frame_duration"], type, border_path)
 
 def process_batch_dir(input_dir, output_dir, options, prefix, update_callback):
 	#sub_dir = files_utils.get_sub_directories(input_dir)
@@ -44,15 +63,8 @@ def process_batch_dir(input_dir, output_dir, options, prefix, update_callback):
 				data.finalizeAndSave(arr, options["scale_factor"], options["color_palette"], output_dir, prefix, suffix)
 				update_callback( "=== Saving single image {}".format(suffix), i_single / n_single )
 
-
-
-		if options["gif_ascend"]:
-			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], "gif_ascend", border_path)
-		if options["gif_descend"]:
-			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], "gif_descend", border_path)
-		if options["gif_depth"]:
-			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], "gif_depth", border_path)
-		if options["gif_depth_reverse"]:
-			data.make_gif(d, output_dir, options["scale_factor"], options["gif_frame_duration"], "gif_depth_reverse", border_path)
-			
+		make_gif_from_type("gif_ascend", d, output_dir, options, prefix, border_path, update_callback)
+		make_gif_from_type("gif_descend", d, output_dir, options, prefix, border_path, update_callback)
+		make_gif_from_type("gif_depth", d, output_dir, options, prefix, border_path, update_callback)
+		make_gif_from_type("gif_depth_reverse", d, output_dir, options, prefix, border_path, update_callback)
 		

@@ -42,39 +42,17 @@ Use `python gbcam_hdr_utils_cli.py <action> --help`  for further help about a sp
 * [Gameboy 2BPP Graphics Format](https://www.huderlem.com/demos/gameboy2bpp.html)
 * [Gameboy Camera Gallery](https://github.com/HerrZatacke/gb-printer-web)
 * [Game Boy Gamera Club Discord](https://discord.gg/C7WFJHG)
+* Method used for stitching : [phase correlation](https://sthoduka.github.io/imreg_fmt/docs/phase-correlation/)
 
 ## TODO
 
-### Convert
-- [x] Support Photo rolls dump (2048Ko)
-- [x] CLI
-- [x] GUI
-- [ ] read/write metadata
-- [ ] ignore deleted pictures/chech checksum ?
+### Fix
 
-### Organize
-- [x] GUI
-- [x] link to core
-- [x] CLI
+- [ ] organize rewrite (monotonous)
+- [ ] debug stitch ? (Puy de Dome)
 
-### Process
-- [x] GUI
-- [x] link to core
-- [x] implement increasing depth
-- [x] CLI
+### Doc
 
-### Stitch
-- [x] GUI
-- [x] link to core
-- [ ] CLI
-
-#### Nice to have
-- [ ] pictures previews
-- [ ] input filenames and nb of files
-- [ ] save config (last opened tab, paths for each step, settings)
-
-### Code
-
-- [ ] code structure (`src`) relative imports
-- [ ]  `__main__.py`,  `__init__.py`
+- [ ] add images
+- [ ] rewrite README
 

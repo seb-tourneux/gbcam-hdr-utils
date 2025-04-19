@@ -14,6 +14,10 @@ from typing_extensions import TypeAlias
 
 Int2: TypeAlias = Annotated[npt.NDArray[np.int_], (2,)]
 
+def default_options():
+    return {
+        "border_size": 50
+    }
 
 debug_level = 0
 def debug_fine(f):
@@ -323,11 +327,11 @@ def compute_global_shifts_bounding_box(datas : list[ImageData]):
     max_y = max(i.global_shift[0] for i in datas)
     return np.array((min_x, min_y), dtype=np.int_), np.array((max_x, max_y), dtype=np.int_)
 
-def save_images(datas : list[ImageData], out_folder : str):
+def save_images(datas : list[ImageData], out_folder : str, options : dict):
     compute_global_shifts(datas)
     minBox, maxBox = compute_global_shifts_bounding_box(datas)
     span = maxBox - minBox
-    border = np.array((50, 50), dtype=np.int_)
+    border = np.array((options["border_size"], options["border_size"]), dtype=np.int_)
     single_size = np.array([datas[0].img.shape[1], datas[0].img.shape[0]], dtype=np.int_)
     total_size = single_size + span + border
     pos_unmatched = (20,20)
@@ -351,7 +355,7 @@ def save_images(datas : list[ImageData], out_folder : str):
 
     blended_all.save(os.path.join(out_folder, "stitch.png"))
 
-def auto_align(in_folder, out_folder, threshold, update_callback):
+def auto_align(in_folder, out_folder, options, update_callback):
 
     images = align.load_img_and_paths_cv2(in_folder)
 
@@ -360,6 +364,6 @@ def auto_align(in_folder, out_folder, threshold, update_callback):
     placeds = [i for i in datas if i.shift_from_parent is not None]
     update_callback(f"Managed to stitch {len(placeds)}/{len(datas)} images")
     
-    save_images(datas, out_folder)
+    save_images(datas, out_folder, options)
 
 
