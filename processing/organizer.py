@@ -7,6 +7,14 @@ from enum import Enum
 
 Mode = Enum('Mode', ['Split', 'Skip', 'Keep'])
 
+
+def default_options():
+    return {
+        "threshold": 0.25,
+        "max_nb_per_set": 29,
+        "mode": Mode.Split
+    }
+
 def set_infos(set_paths):
 	basenames = [os.path.basename(p) for p in set_paths]
 	N = len(basenames)
@@ -59,16 +67,16 @@ def append_current_set(sets_paths, current_set, max_nb_per_set, mode, completion
 def stop_distance(cur_mean, ref_mean, threshold):
 	return abs(cur_mean - ref_mean) > threshold
 
-def separate_hdr_sets(input_dir, output_dir, threshold, max_nb_per_set, mode, update_callback = None):
+def separate_hdr_sets(input_dir, output_dir, options, update_callback = None):
 	sub_dirs = files_utils.get_sub_directories(input_dir)
 	if not sub_dirs:
-		separate_hdr_sets_dir(input_dir, output_dir, threshold, max_nb_per_set, mode, update_callback)
+		separate_hdr_sets_dir(input_dir, output_dir, options, update_callback)
 	else:
 		# recursive call
 		for sub_dir in sub_dirs:
 			base = os.path.basename(sub_dir)
 			new_output_dir = os.path.join(output_dir, base)
-			separate_hdr_sets(sub_dir, new_output_dir, threshold, max_nb_per_set, mode, update_callback)
+			separate_hdr_sets(sub_dir, new_output_dir, options, update_callback)
 
 
 
@@ -76,9 +84,12 @@ def separate_hdr_sets(input_dir, output_dir, threshold, max_nb_per_set, mode, up
 # As HDR images gradually increases (or decreases) exposure
 # we can detect big differences of luminosity in sequences of images.
 # Most of the time it should detect (almost full black -> almost full white) or (almost full white -> almost full black)
-def separate_hdr_sets_dir(input_dir, output_dir, threshold, max_nb_per_set, mode, update_callback = None):
+def separate_hdr_sets_dir(input_dir, output_dir, options: dict, update_callback = None):
 	update_callback("Organizing {} into {}".format(input_dir, output_dir))
 
+	threshold = options["threshold"]
+	max_nb_per_set = options["max_nb_per_set"]
+	mode = options["mode"]
 
 	files = files_utils.get_image_files(input_dir)
 	n = len(files)

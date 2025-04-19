@@ -50,12 +50,17 @@ Keep: keep the big set as is.""")
 	def __init__(self):
 		super(WidgetOrganize, self).__init__("Organize", self.do_it, self.build_middle_widget)
 
-	def do_it_org(self, in_folder, out_folder):
-		threshold = WidgetOrganize.slider_val_to_threshold(self.threshold_slider.value())
+	def get_options(self):
+		threshold = self.threshold_widget.get_value()
 		max_nb_per_set = self.spin_box_max_nb.value()
 		mode = organizer.Mode(self.combo_split_mode.currentIndex()+1)
+		return {'threshold' : threshold,
+				'max_nb_per_set' : max_nb_per_set,
+				'mode' : mode}
 
-		organizer.separate_hdr_sets(in_folder, out_folder, threshold, max_nb_per_set, mode, self.update)
+	def do_it_org(self, in_folder, out_folder):
+		options = self.get_options()
+		organizer.separate_hdr_sets(in_folder, out_folder, options, self.update)
 
 	def do_it(self):
 		self.job_start()
@@ -64,10 +69,6 @@ Keep: keep the big set as is.""")
 			return
 		
 		(in_folder, out_folder) = self.folders_selector_widget.get_folders()
-		threshold = self.threshold_widget.get_value()
-		max_nb_per_set = self.spin_box_max_nb.value()
-		mode = organizer.Mode(self.combo_split_mode.currentIndex()+1)
-
-		organizer.separate_hdr_sets(in_folder, out_folder, threshold, max_nb_per_set, mode, self.update)
+		self.do_it_org(in_folder, out_folder)
 		
 		self.job_done()

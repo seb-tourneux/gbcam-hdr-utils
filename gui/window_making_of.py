@@ -87,13 +87,17 @@ class WidgetMakingOf(WidgetCommon):
 	def __init__(self):
 		super(WidgetMakingOf, self).__init__("Making-Of", self.do_it, self.build_middle_widget)
 
-	def do_it_making_of(self, in_folder, out_folder):
+	def get_options(self):
 		options = {'frame_duration' : self.spin_box_frame_duration.value(),
-					'freeze_duration' : self.spin_box_freeze_duration.value(),
-					'fade_duration' : self.spin_box_fade_duration.value(),
-					'bg_color' : self.color_picker.rgb
-				}
+				'freeze_duration' : self.spin_box_freeze_duration.value(),
+				'fade_duration' : self.spin_box_fade_duration.value(),
+				'bg_color' : self.color_picker.rgb
+			}
+		return options
 
+	def do_it_making_of(self, in_folder, out_folder):
+		options = self.get_options()
+  
 		making_of.make_gifs(in_folder, out_folder, self.update)
 		making_of.make_gif_all(in_folder, out_folder, options, self.update)
 

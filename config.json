@@ -1,0 +1,27 @@
+{
+    "process": {
+        "blend_average": true,
+        "scale_factor": 1,
+        "border_path": null,
+        "palette": null,
+        "gif_frame_duration": 100,
+        "gif_ascend": false,
+        "gif_descend": false,
+        "gif_depth": true,
+        "gif_depth_reverse": false
+    },
+    "organize": {
+        "threshold": 0.25,
+        "max_nb_per_set": 29,
+        "mode": "keep"
+    },
+    "stitch": {
+        "border_size": 50
+    },
+    "making_of": {
+        "frame_duration": 100,
+        "freeze_duration": 3000,
+        "fade_duration": 1000,
+        "bg_color": [255, 255, 255]
+    }
+}
