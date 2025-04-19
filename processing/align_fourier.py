@@ -9,9 +9,13 @@ from pathlib import Path
 
 from dataclasses import dataclass
 import numpy.typing as npt
+from typing import Annotated
+from typing_extensions import TypeAlias
+
+Int2: TypeAlias = Annotated[npt.NDArray[np.int_], (2,)]
 
 
-debug_level = 1
+debug_level = 0
 def debug_fine(f):
     global debug_level
     if debug_level >= 2:
@@ -28,15 +32,16 @@ class ImageData:
     img : npt.NDArray
     fft : npt.NDArray
     path : Path
-    shift_from_parent : tuple[int, int] | None
+    shift_from_parent : Int2 | None
     parent_idx : int | None
+    global_shift : Int2 | None
 
 @dataclass(frozen=True)
 class CorrelationData:
     parent_idx : int
     child_idx : int
     correlation : float
-    shift : tuple
+    shift : Int2
     correlation_magnitude : npt.NDArray
 
 def pad_to_square(arr):
@@ -80,7 +85,7 @@ def fft_test(img, path : Path):
 
 def create_image_data(idx, img, path : Path):
     fft = compute_fft(img)
-    return ImageData(idx, img, fft, path, None, None)
+    return ImageData(idx, img, fft, path, None, None, None)
 
 
 def compute_cps(fft1, fft2):
@@ -265,21 +270,18 @@ def compute_shift_cps(data1 : ImageData, data2 : ImageData):
 
     debug_fine(lambda: show_corr(data1, data2, correlation_magnitude, shift, 0, f"Best shift: {shift=} {diff=}"))
 
+    shift = np.array(shift, dtype=np.int_)
     return shift, peak_val, correlation_magnitude
 
 def compute_correlation(data1 : ImageData, data2: ImageData):
     (shift, correlation, correlation_magnitude) = compute_shift_cps(data1, data2)
     return CorrelationData(data1.img_idx, data2.img_idx, correlation, shift, correlation_magnitude)
 
-def auto_align(in_folder, out_folder, threshold, update_callback):
-
-    images = align.load_img_and_paths_cv2(in_folder)
+def find_matches(images, update_callback):
     datas = [create_image_data(idx, img, path) for (idx, (img, path)) in enumerate(images)]
 
-    target_resolution = len(images) * max(np.max([img.shape for (img, _) in images], axis=0))
-    
     datas[0].parent_idx = -1
-    datas[0].shift_from_parent = (0,0)
+    datas[0].shift_from_parent = np.zeros(2, dtype=np.int_)
     
     while True:
         candidates = [i for i in datas if i.shift_from_parent is None]
@@ -296,14 +298,68 @@ def auto_align(in_folder, out_folder, threshold, update_callback):
 
         debug(lambda: show_corr(datas[best_corr.parent_idx], datas[best_corr.child_idx], best_corr.correlation_magnitude, best_corr.shift, best_corr.correlation, "Accepted") )
 
-        # TODO threshold, limited number of tries
-        
         found = datas[best_corr.child_idx]
         found.parent_idx = best_corr.parent_idx
         found.shift_from_parent = best_corr.shift
+        update_callback(f"Found match {found.path.stem} with parent {datas[best_corr.parent_idx].path.stem}: ({best_corr.shift[1]}, {-best_corr.shift[0]}) corr: {best_corr.correlation:.4f}.")
+    return datas
+
+def compute_global_shift(datas : list[ImageData], index : int):
+    if datas[index].parent_idx == -1 or datas[index].shift_from_parent is None:
+        datas[index].global_shift = np.zeros(2, dtype=np.int_)
+        return
+    parent_idx = datas[index].parent_idx
+    compute_global_shift(datas, parent_idx)
+    datas[index].global_shift = datas[index].shift_from_parent + datas[parent_idx].global_shift
+
+def compute_global_shifts(datas : list[ImageData]):
+    for i, _ in enumerate(datas):
+        compute_global_shift(datas, i)
+
+def compute_global_shifts_bounding_box(datas : list[ImageData]):
+    min_x = min(i.global_shift[1] for i in datas)
+    min_y = min(i.global_shift[0] for i in datas)
+    max_x = max(i.global_shift[1] for i in datas)
+    max_y = max(i.global_shift[0] for i in datas)
+    return np.array((min_x, min_y), dtype=np.int_), np.array((max_x, max_y), dtype=np.int_)
+
+def save_images(datas : list[ImageData], out_folder : str):
+    compute_global_shifts(datas)
+    minBox, maxBox = compute_global_shifts_bounding_box(datas)
+    span = maxBox - minBox
+    border = np.array((50, 50), dtype=np.int_)
+    single_size = np.array([datas[0].img.shape[1], datas[0].img.shape[0]], dtype=np.int_)
+    total_size = single_size + span + border
+    pos_unmatched = (20,20)
+    ref_pos = -minBox + border//2
+
+    background = Image.new("RGBA", total_size.tolist())
+    blended_all = background.copy()
+    
+    # reverse order to put first image on top of the blend
+    for data in reversed(datas):
+        if data.global_shift is None:
+            pos = pos_unmatched
+        else:
+            pos = ref_pos + np.flip(data.global_shift)
+        pilImg = Image.fromarray(data.img)
+        single_img = background.copy()
+        single_img.paste(pilImg, pos.tolist())
+        single_img.save(os.path.join(out_folder, f"{data.path.stem}.png"))
+        
+        blended_all.paste(pilImg, pos.tolist())
+
+    blended_all.save(os.path.join(out_folder, "stitch.png"))
+
+def auto_align(in_folder, out_folder, threshold, update_callback):
+
+    images = align.load_img_and_paths_cv2(in_folder)
+
+    datas = find_matches(images, update_callback)
 
     placeds = [i for i in datas if i.shift_from_parent is not None]
     update_callback(f"Managed to stitch {len(placeds)}/{len(datas)} images")
     
-    # TODO output results
+    save_images(datas, out_folder)
+
 
