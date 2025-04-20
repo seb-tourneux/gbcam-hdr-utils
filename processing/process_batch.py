@@ -35,7 +35,7 @@ def make_gif_from_type(gif_type, input_dir, output_dir, options, prefix, border_
     if options[gif_type]:
         output_dir_type = os.path.join(output_dir, gif_type)
         os.makedirs(output_dir_type, exist_ok=True)
-        data.make_gif(input_dir, output_dir_type, options["scale_factor"], options["gif_frame_duration"], type, border_path)
+        data.make_gif(input_dir, output_dir_type, options["scale_factor"], options["gif_frame_duration"], gif_type, border_path)
 
 def process_batch_dir(input_dir, output_dir, options, prefix, update_callback):
 	#sub_dir = files_utils.get_sub_directories(input_dir)

@@ -4,13 +4,16 @@ import os
 import shutil
 from copy import deepcopy
 from enum import Enum
+from pathlib import Path
 
+Order = Enum('Order', ['Light_to_dark', 'Dark_to_light', 'No_order'])
 Mode = Enum('Mode', ['Split', 'Skip', 'Keep'])
 
 
 def default_options():
     return {
-        "threshold": 0.25,
+        "order": Order.Light_to_dark,
+        "threshold": 0.50,
         "max_nb_per_set": 29,
         "mode": Mode.Split
     }
@@ -64,8 +67,13 @@ def append_current_set(sets_paths, current_set, max_nb_per_set, mode, completion
 	sets_paths.append(deepcopy(paths_only))
 
 
-def stop_distance(cur_mean, ref_mean, threshold):
-	return abs(cur_mean - ref_mean) > threshold
+def stop_distance(cur_mean, ref_mean, threshold, order):
+    if order == Order.Light_to_dark:
+        return ref_mean - cur_mean < -threshold
+    elif order == Order.Dark_to_light:
+        return ref_mean - cur_mean > threshold
+    elif order == Order.No_order:
+        return abs(ref_mean - cur_mean) > threshold
 
 def separate_hdr_sets(input_dir, output_dir, options, update_callback = None):
 	sub_dirs = files_utils.get_sub_directories(input_dir)
@@ -90,6 +98,7 @@ def separate_hdr_sets_dir(input_dir, output_dir, options: dict, update_callback 
 	threshold = options["threshold"]
 	max_nb_per_set = options["max_nb_per_set"]
 	mode = options["mode"]
+	order = options["order"]
 
 	files = files_utils.get_image_files(input_dir)
 	n = len(files)
@@ -103,7 +112,7 @@ def separate_hdr_sets_dir(input_dir, output_dir, options: dict, update_callback 
 	for i, (arr, path) in enumerate(arrays_paths):
 		cur_mean = arr.mean()
 		
-		stopped_by_dist = stop_distance(cur_mean, ref_mean, threshold)
+		stopped_by_dist = stop_distance(cur_mean, ref_mean, threshold, order)
 		stopped_by_size = mode == Mode.Split and stop_size(current_set, max_nb_per_set)
 		
 		if stopped_by_dist or stopped_by_size:

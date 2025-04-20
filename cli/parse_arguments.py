@@ -33,6 +33,8 @@ def add_subparser_organize(subparsers):
     parser_organize.add_argument("-n", "--max_nb_per_set", help="Maximum number of images per set. Sets strictly bigger than this value will be handled according to mode", dest="max_nb_per_set", default=default_options["max_nb_per_set"], type=int)
     modes = [m.name.lower() for m in organizer.Mode]
     parser_organize.add_argument("-m", "--mode", help="Mode to manage sets bigger than max_nb_per_set", choices=modes, dest="mode", default=default_options["mode"])
+    orders = [o.name.lower() for o in organizer.Order]
+    parser_organize.add_argument("-o", "--order", help="Order of the AEB sets", choices=orders, dest="order", default=default_options["order"])
     #add_in_out_folder_args(parser_organize)
 
 def add_subparser_process(subparsers):

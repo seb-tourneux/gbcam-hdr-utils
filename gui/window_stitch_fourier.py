@@ -24,7 +24,7 @@ class WidgetStitchFourier(WidgetCommon):
         align_fourier.auto_align(in_folder, out_folder, self.update)
 
     def get_options(self):
-        return {}
+        return align_fourier.default_options()
 
     def do_it(self):
         self.job_start()

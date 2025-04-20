@@ -8,13 +8,20 @@ import processing.organizer as organizer
 class WidgetOrganize(WidgetCommon):
 
 	def build_middle_widget(self):
+		default_options = organizer.default_options()
 		middle_widget = QGroupBox("Settings", self)
 
 		middle_layout = QVBoxLayout()
 		middle_widget.setLayout(middle_layout)
 		middle_widget.setMaximumWidth(300)
 
-		self.threshold_widget = SliderLabeled(middle_widget, 0.25)
+		self.combo_order = QComboBox()
+		self.combo_order.setToolTip("""Order of the AEB sets. 
+Photo!'s AEB order is \"Light to dark\".""")
+		for order in organizer.Order:
+			self.combo_order.addItem(order.name.replace('_', ' '))
+
+		self.threshold_widget = SliderLabeled(middle_widget, default_options["threshold"])
 		self.threshold_widget.label.setText("Threshold")
 		self.threshold_widget.setToolTip("""Luminosity difference threshold
 If two consecutives images have a luminosity difference above this threshold, then they'll be separated into different sets.
@@ -31,7 +38,7 @@ Increase if a single sequence is incorrectly splitted into several sets.""")
 		self.combo_split_mode.addItems(organizer.Mode._member_names_)
 
 		max_nb_layout.addWidget(self.combo_split_mode)
-		self.spin_box_max_nb = QSpinBox(minimum=1, maximum=100000000, value = 29, suffix=' images')
+		self.spin_box_max_nb = QSpinBox(minimum=1, maximum=100000000, value = default_options["max_nb_per_set"], suffix=' images')
 		max_nb_layout.addWidget(QLabel(" sets bigger than"))
 		max_nb_widget.setToolTip("""How to handle sets that are strictly bigger than this value.
 
@@ -40,6 +47,7 @@ Skip: can be usefull to filter out some video sets mixed with AEB sets.
 Keep: keep the big set as is.""")
 		max_nb_layout.addWidget(self.spin_box_max_nb)
 		
+		middle_layout.addWidget(self.combo_order)
 		middle_layout.addWidget(self.threshold_widget)
 		middle_layout.addWidget(max_nb_widget)
 		
@@ -54,7 +62,9 @@ Keep: keep the big set as is.""")
 		threshold = self.threshold_widget.get_value()
 		max_nb_per_set = self.spin_box_max_nb.value()
 		mode = organizer.Mode(self.combo_split_mode.currentIndex()+1)
-		return {'threshold' : threshold,
+		order = organizer.Order(self.combo_order.currentIndex()+1)
+		return {'order' : order,
+				'threshold' : threshold,
 				'max_nb_per_set' : max_nb_per_set,
 				'mode' : mode}
 
